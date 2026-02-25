@@ -79,6 +79,7 @@ interface StoreContextValue {
   updatePostingAccount: (id: string, updates: Partial<PostingAccount>) => void;
   togglePostingAccount: (id: string) => void;
   toggleAllPostingAccounts: (checked: boolean) => void;
+  toggleDivisionAbb: (accountId: string, abb: string) => void;
   movePostingAccount: (id: string, direction: "up" | "down") => void;
   assignDivision: (accountId: string, divAbb: string) => void;
   unassignDivision: (accountId: string, divAbb: string) => void;
@@ -129,7 +130,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 abb: d.abb,
                 color1: d.color1,
               })),
-              postingAccounts: saved.postingAccounts || [],
+              postingAccounts: (saved.postingAccounts || []).map((pa) => ({
+                ...pa,
+                disabledDivisionAbbs: pa.disabledDivisionAbbs ?? [],
+              })),
               postTypes: saved.postTypes?.length
                 ? saved.postTypes
                 : base.postTypes,
@@ -267,6 +271,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             fbAccountId: "",
             igAccountId: "",
             divisionAbbs: [],
+            disabledDivisionAbbs: [],
             checked: true,
           },
         ],
@@ -298,9 +303,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (id: string) =>
       setState((s) => ({
         ...s,
-        postingAccounts: s.postingAccounts.map((pa) =>
-          pa.id === id ? { ...pa, checked: !pa.checked } : pa
-        ),
+        postingAccounts: s.postingAccounts.map((pa) => {
+          if (pa.id !== id) return pa;
+          const willCheck = !pa.checked;
+          return {
+            ...pa,
+            checked: willCheck,
+            disabledDivisionAbbs: willCheck ? [] : [...pa.divisionAbbs],
+          };
+        }),
       })),
     []
   );
@@ -309,7 +320,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (checked: boolean) =>
       setState((s) => ({
         ...s,
-        postingAccounts: s.postingAccounts.map((pa) => ({ ...pa, checked })),
+        postingAccounts: s.postingAccounts.map((pa) => ({
+          ...pa,
+          checked,
+          disabledDivisionAbbs: checked ? [] : [...pa.divisionAbbs],
+        })),
+      })),
+    []
+  );
+
+  const toggleDivisionAbb = useCallback(
+    (accountId: string, abb: string) =>
+      setState((s) => ({
+        ...s,
+        postingAccounts: s.postingAccounts.map((pa) => {
+          if (pa.id !== accountId) return pa;
+          const isDisabled = pa.disabledDivisionAbbs.includes(abb);
+          const newDisabled = isDisabled
+            ? pa.disabledDivisionAbbs.filter((a) => a !== abb)
+            : [...pa.disabledDivisionAbbs, abb];
+          const allDisabled =
+            newDisabled.length >= pa.divisionAbbs.length &&
+            pa.divisionAbbs.every((a) => newDisabled.includes(a));
+          return {
+            ...pa,
+            disabledDivisionAbbs: newDisabled,
+            checked: !allDisabled,
+          };
+        }),
       })),
     []
   );
@@ -447,6 +485,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         updatePostingAccount,
         togglePostingAccount,
         toggleAllPostingAccounts,
+        toggleDivisionAbb,
         movePostingAccount,
         assignDivision,
         unassignDivision,

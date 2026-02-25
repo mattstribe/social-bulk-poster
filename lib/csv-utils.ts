@@ -120,7 +120,10 @@ export function generateCsvRows(state: AppState): CsvRow[] {
       if (!account.fbAccountId && !account.igAccountId) continue;
       if (!account.divisionAbbs.length) continue;
 
-      const divs = account.divisionAbbs
+      const activeAbbs = account.divisionAbbs.filter(
+        (abb) => !account.disabledDivisionAbbs?.includes(abb)
+      );
+      const divs = activeAbbs
         .map((abb) => divMap.get(abb))
         .filter((d): d is Division => !!d);
 

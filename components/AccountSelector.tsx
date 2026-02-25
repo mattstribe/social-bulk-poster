@@ -3,7 +3,12 @@
 import { useStore } from "@/lib/store";
 
 export default function AccountSelector() {
-  const { state, togglePostingAccount, toggleAllPostingAccounts } = useStore();
+  const {
+    state,
+    togglePostingAccount,
+    toggleAllPostingAccounts,
+    toggleDivisionAbb,
+  } = useStore();
 
   const locationAccounts = state.postingAccounts.filter(
     (pa) => pa.type === "location"
@@ -49,64 +54,114 @@ export default function AccountSelector() {
       ) : (
         <div className="space-y-4">
           {locationAccounts.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-600">
-                Location
-              </h3>
-              <div className="space-y-1">
-                {locationAccounts.map((pa) => (
-                  <label
-                    key={pa.id}
-                    className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={pa.checked}
-                      onChange={() => togglePostingAccount(pa.id)}
-                      className="accent-blue-600"
-                    />
-                    <span className="text-sm">
-                      {pa.name || "(unnamed)"}
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      {pa.divisionAbbs.length} div
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <AccountGroup
+              label="Location"
+              color="blue"
+              accounts={locationAccounts}
+              onToggleAccount={togglePostingAccount}
+              onToggleDivision={toggleDivisionAbb}
+            />
           )}
-
           {tierAccounts.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-purple-600">
-                Tier
-              </h3>
-              <div className="space-y-1">
-                {tierAccounts.map((pa) => (
-                  <label
-                    key={pa.id}
-                    className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={pa.checked}
-                      onChange={() => togglePostingAccount(pa.id)}
-                      className="accent-purple-600"
-                    />
-                    <span className="text-sm">
-                      {pa.name || "(unnamed)"}
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      {pa.divisionAbbs.length} div
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <AccountGroup
+              label="Tier"
+              color="purple"
+              accounts={tierAccounts}
+              onToggleAccount={togglePostingAccount}
+              onToggleDivision={toggleDivisionAbb}
+            />
           )}
         </div>
       )}
     </section>
+  );
+}
+
+function AccountGroup({
+  label,
+  color,
+  accounts,
+  onToggleAccount,
+  onToggleDivision,
+}: {
+  label: string;
+  color: "blue" | "purple";
+  accounts: import("@/lib/types").PostingAccount[];
+  onToggleAccount: (id: string) => void;
+  onToggleDivision: (accountId: string, abb: string) => void;
+}) {
+  const colorClass =
+    color === "blue" ? "text-blue-600" : "text-purple-600";
+  const accentClass =
+    color === "blue" ? "accent-blue-600" : "accent-purple-600";
+
+  return (
+    <div>
+      <h3
+        className={`mb-2 text-xs font-semibold uppercase tracking-wider ${colorClass}`}
+      >
+        {label}
+      </h3>
+      <div className="space-y-0.5">
+        {accounts.map((pa) => {
+          const activeCount =
+            pa.divisionAbbs.length -
+            pa.disabledDivisionAbbs.filter((a) =>
+              pa.divisionAbbs.includes(a)
+            ).length;
+          const isIndeterminate =
+            activeCount > 0 && activeCount < pa.divisionAbbs.length;
+
+          return (
+            <div key={pa.id}>
+              {/* Account row */}
+              <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800">
+                <input
+                  type="checkbox"
+                  checked={pa.checked}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isIndeterminate;
+                  }}
+                  onChange={() => onToggleAccount(pa.id)}
+                  className={accentClass}
+                />
+                <span className="text-sm font-medium">
+                  {pa.name || "(unnamed)"}
+                </span>
+                <span className="text-xs text-zinc-400">
+                  {activeCount}/{pa.divisionAbbs.length}
+                </span>
+              </label>
+
+              {/* Division rows */}
+              {pa.divisionAbbs.length > 0 && (
+                <div className="ml-6 space-y-0.5">
+                  {pa.divisionAbbs.map((abb) => {
+                    const isActive =
+                      !pa.disabledDivisionAbbs.includes(abb);
+                    return (
+                      <label
+                        key={abb}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isActive}
+                          onChange={() => onToggleDivision(pa.id, abb)}
+                          className="accent-zinc-500"
+                        />
+                        <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
+                          {abb}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
