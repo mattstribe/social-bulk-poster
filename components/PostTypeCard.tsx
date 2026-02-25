@@ -68,7 +68,7 @@ export default function PostTypeCard({ postType }: Props) {
             value={postType.captionTemplate}
             onChange={(e) => update({ captionTemplate: e.target.value })}
             rows={2}
-            placeholder="Week {week} {divName} {type} are here! #{league}"
+            placeholder="Week {week} {divName} {type} are here! #NBHL"
             className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
           />
           <p className="mt-0.5 text-xs italic text-zinc-400">
@@ -88,7 +88,7 @@ export default function PostTypeCard({ postType }: Props) {
             value={postType.tierCaptionTemplate}
             onChange={(e) => update({ tierCaptionTemplate: e.target.value })}
             rows={2}
-            placeholder="Week {week} {conf} {type} are here! #{league}"
+            placeholder="Week {week} {conf} {type} are here! #NBHL"
             className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
           />
           <p className="mt-0.5 text-xs italic text-zinc-400">

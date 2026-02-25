@@ -16,7 +16,7 @@ const s3 = new S3Client({
 export async function GET() {
   if (!CDN_BASE) {
     return NextResponse.json(
-      { accounts: [], divisions: [], tierAccounts: {}, cdnBaseUrl: "" },
+      { accounts: [], divisions: [], postingAccounts: [], cdnBaseUrl: "" },
       { status: 200 }
     );
   }
@@ -31,7 +31,7 @@ export async function GET() {
   } catch (err) {
     console.error("Failed to read settings from R2:", err);
     return NextResponse.json(
-      { accounts: [], divisions: [], tierAccounts: {}, cdnBaseUrl: CDN_BASE },
+      { accounts: [], divisions: [], postingAccounts: [], cdnBaseUrl: CDN_BASE },
       { status: 200 }
     );
   }

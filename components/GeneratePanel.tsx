@@ -31,18 +31,15 @@ export default function GeneratePanel() {
     URL.revokeObjectURL(url);
   }, [rows, state.leagueName, state.weekNumber]);
 
-  const hasLinkedDivAccounts = state.divisions.some(
-    (d) => d.fbAccountId || d.igAccountId
+  const hasCheckedAccounts = state.postingAccounts.some((pa) => pa.checked);
+  const hasLinkedAccounts = state.postingAccounts.some(
+    (pa) => pa.checked && (pa.fbAccountId || pa.igAccountId)
   );
-  const hasLinkedTierAccounts = Object.values(state.tierAccounts).some(
-    (ta) => ta.fbAccountId || ta.igAccountId
-  );
-  const hasLinkedAccounts = hasLinkedDivAccounts || hasLinkedTierAccounts;
 
   const canGenerate =
     state.leagueName.trim() !== "" &&
     hasLinkedAccounts &&
-    state.divisions.some((d) => d.checked) &&
+    hasCheckedAccounts &&
     state.postTypes.some((pt) => pt.enabled);
 
   return (
@@ -70,15 +67,15 @@ export default function GeneratePanel() {
 
       {!canGenerate && (
         <p className="text-sm text-zinc-500">
-          Fill in the league name, upload divisions and accounts, link at least
-          one account, select divisions, and enable at least one post type.
+          Create posting accounts with linked social IDs on the Setup page,
+          select them above, and enable at least one post type.
         </p>
       )}
 
       {generated && rows.length === 0 && (
         <p className="text-sm text-amber-600">
-          No rows generated. Make sure selected divisions have linked accounts
-          and at least one post type is enabled.
+          No rows generated. Make sure selected accounts have linked social IDs,
+          assigned divisions, and at least one post type is enabled.
         </p>
       )}
 

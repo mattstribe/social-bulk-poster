@@ -14,9 +14,10 @@ import {
   type SocialAccount,
   type Division,
   type PostType,
-  type TierAccount,
+  type PostingAccount,
   DEFAULT_CDN_BASE_URL,
   DEFAULT_POST_TYPES,
+  DEFAULT_POSTING_ACCOUNTS,
 } from "./types";
 
 const STORAGE_KEY = "social-bulk-poster-state";
@@ -24,7 +25,7 @@ const STORAGE_KEY = "social-bulk-poster-state";
 interface SavedSettings {
   accounts: SocialAccount[];
   divisions: Division[];
-  tierAccounts: Record<string, TierAccount>;
+  postingAccounts: PostingAccount[];
   postTypes: PostType[];
   leagueName: string;
 }
@@ -36,16 +37,24 @@ function getInitialState(): AppState {
     weekNumber: 1,
     accounts: [],
     divisions: [],
-    tierAccounts: {},
+    postingAccounts: DEFAULT_POSTING_ACCOUNTS,
     postTypes: DEFAULT_POST_TYPES,
   };
+}
+
+function buildDivisionsMap(
+  accounts: PostingAccount[]
+): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  for (const pa of accounts) map[pa.id] = [...pa.divisionAbbs];
+  return map;
 }
 
 function settingsSnapshot(state: AppState): string {
   const s: SavedSettings = {
     accounts: state.accounts,
     divisions: state.divisions,
-    tierAccounts: state.tierAccounts,
+    postingAccounts: state.postingAccounts,
     postTypes: state.postTypes,
     leagueName: state.leagueName,
   };
@@ -56,28 +65,24 @@ interface StoreContextValue {
   state: AppState;
   hasUnsavedChanges: boolean;
   saving: boolean;
+  selectedDivisionAbb: string | null;
+  setSelectedDivisionAbb: (abb: string | null) => void;
+  savedDivisionsMap: Record<string, string[]>;
   saveSettings: () => void;
   setLeagueName: (name: string) => void;
   setCdnBaseUrl: (url: string) => void;
   setWeekNumber: (week: number) => void;
   setAccounts: (accounts: SocialAccount[]) => void;
   setDivisions: (divisions: Division[]) => void;
-  toggleDivision: (abb: string) => void;
-  toggleAllDivisions: (checked: boolean) => void;
-  addDivision: (conf: string, div: string, abb: string) => void;
-  removeDivision: (abb: string) => void;
-  removeTierDivisions: (conf: string) => void;
-  moveTier: (conf: string, direction: "up" | "down") => void;
-  updateDivisionAccount: (
-    abb: string,
-    field: "fbAccountId" | "igAccountId",
-    accountId: string
-  ) => void;
-  updateTierAccount: (
-    conf: string,
-    field: "fbAccountId" | "igAccountId",
-    accountId: string
-  ) => void;
+  addPostingAccount: () => void;
+  removePostingAccount: (id: string) => void;
+  updatePostingAccount: (id: string, updates: Partial<PostingAccount>) => void;
+  togglePostingAccount: (id: string) => void;
+  toggleAllPostingAccounts: (checked: boolean) => void;
+  movePostingAccount: (id: string, direction: "up" | "down") => void;
+  assignDivision: (accountId: string, divAbb: string) => void;
+  unassignDivision: (accountId: string, divAbb: string) => void;
+  toggleDivisionOnAccount: (accountId: string) => void;
   setPostTypes: (types: PostType[]) => void;
   updatePostType: (id: string, updates: Partial<PostType>) => void;
   addPostType: () => void;
@@ -101,16 +106,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (res.ok) {
           const saved = (await res.json()) as SavedSettings & {
             cdnBaseUrl?: string;
+            // legacy fields for migration
+            tierAccounts?: Record<
+              string,
+              { fbAccountId: string; igAccountId: string }
+            >;
           };
           if (saved.cdnBaseUrl) {
             base = { ...base, cdnBaseUrl: saved.cdnBaseUrl };
           }
-          if (saved.accounts?.length || saved.divisions?.length) {
+          if (
+            saved.accounts?.length ||
+            saved.divisions?.length ||
+            saved.postingAccounts?.length
+          ) {
             base = {
               ...base,
               accounts: saved.accounts || [],
-              divisions: saved.divisions || [],
-              tierAccounts: saved.tierAccounts || {},
+              divisions: (saved.divisions || []).map((d) => ({
+                conf: d.conf,
+                div: d.div,
+                abb: d.abb,
+                color1: d.color1,
+              })),
+              postingAccounts: saved.postingAccounts || [],
               postTypes: saved.postTypes?.length
                 ? saved.postTypes
                 : base.postTypes,
@@ -119,14 +138,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch {
-        // API not available (local dev without blob token), fall through
+        // API not available, fall through
       }
 
       try {
         const local = localStorage.getItem(STORAGE_KEY);
         if (local) {
           const parsed = JSON.parse(local) as Partial<AppState>;
-          if (base.accounts.length === 0 && base.divisions.length === 0) {
+          if (
+            base.accounts.length === 0 &&
+            base.divisions.length === 0 &&
+            base.postingAccounts.length === 0
+          ) {
             base = { ...base, ...parsed };
           } else {
             base = {
@@ -153,6 +176,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       setState(base);
       setSavedSnapshot(settingsSnapshot(base));
+      setSavedDivisionsMap(buildDivisionsMap(base.postingAccounts));
       initialLoadDone.current = true;
       setHydrated(true);
     }
@@ -167,17 +191,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state, hydrated]);
 
   const hasData =
-    state.divisions.length > 0 || state.accounts.length > 0;
+    state.divisions.length > 0 ||
+    state.accounts.length > 0 ||
+    state.postingAccounts.length > 0;
   const hasUnsavedChanges =
     hydrated && hasData && settingsSnapshot(state) !== savedSnapshot;
 
   const [saving, setSaving] = useState(false);
+  const [selectedDivisionAbb, setSelectedDivisionAbb] = useState<string | null>(
+    null
+  );
+  const [savedDivisionsMap, setSavedDivisionsMap] = useState<
+    Record<string, string[]>
+  >({});
 
   const saveSettings = useCallback(async () => {
     const s: SavedSettings = {
       accounts: state.accounts,
       divisions: state.divisions,
-      tierAccounts: state.tierAccounts,
+      postingAccounts: state.postingAccounts,
       postTypes: state.postTypes,
       leagueName: state.leagueName,
     };
@@ -190,6 +222,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       });
       if (res.ok) {
         setSavedSnapshot(settingsSnapshot(state));
+        setSavedDivisionsMap(buildDivisionsMap(state.postingAccounts));
       }
     } catch {
       // silently fail for now
@@ -218,104 +251,135 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (divisions: Division[]) => setState((s) => ({ ...s, divisions })),
     []
   );
-  const toggleDivision = useCallback(
-    (abb: string) =>
+
+  // --- Posting Account actions ---
+
+  const addPostingAccount = useCallback(
+    () =>
       setState((s) => ({
         ...s,
-        divisions: s.divisions.map((d) =>
-          d.abb === abb ? { ...d, checked: !d.checked } : d
-        ),
-      })),
-    []
-  );
-  const toggleAllDivisions = useCallback(
-    (checked: boolean) =>
-      setState((s) => ({
-        ...s,
-        divisions: s.divisions.map((d) => ({ ...d, checked })),
-      })),
-    []
-  );
-  const addDivision = useCallback(
-    (conf: string, div: string, abb: string) =>
-      setState((s) => ({
-        ...s,
-        divisions: [
-          ...s.divisions,
-          { conf, div, abb, checked: true, fbAccountId: "", igAccountId: "" },
+        postingAccounts: [
+          ...s.postingAccounts,
+          {
+            id: crypto.randomUUID(),
+            name: "",
+            type: "location" as const,
+            fbAccountId: "",
+            igAccountId: "",
+            divisionAbbs: [],
+            checked: true,
+          },
         ],
       })),
     []
   );
-  const removeDivision = useCallback(
-    (abb: string) =>
+
+  const removePostingAccount = useCallback(
+    (id: string) =>
       setState((s) => ({
         ...s,
-        divisions: s.divisions.filter((d) => d.abb !== abb),
+        postingAccounts: s.postingAccounts.filter((pa) => pa.id !== id),
       })),
     []
   );
-  const removeTierDivisions = useCallback(
-    (conf: string) =>
-      setState((s) => {
-        const { [conf]: _, ...rest } = s.tierAccounts;
-        return {
-          ...s,
-          divisions: s.divisions.filter((d) => d.conf !== conf),
-          tierAccounts: rest,
-        };
-      }),
-    []
-  );
-  const moveTier = useCallback(
-    (conf: string, direction: "up" | "down") =>
-      setState((s) => {
-        const tierOrder: string[] = [];
-        for (const d of s.divisions) {
-          if (!tierOrder.includes(d.conf)) tierOrder.push(d.conf);
-        }
-        const idx = tierOrder.indexOf(conf);
-        if (idx === -1) return s;
-        const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-        if (swapIdx < 0 || swapIdx >= tierOrder.length) return s;
-        [tierOrder[idx], tierOrder[swapIdx]] = [
-          tierOrder[swapIdx],
-          tierOrder[idx],
-        ];
-        const reordered = tierOrder.flatMap((t) =>
-          s.divisions.filter((d) => d.conf === t)
-        );
-        return { ...s, divisions: reordered };
-      }),
-    []
-  );
-  const updateDivisionAccount = useCallback(
-    (abb: string, field: "fbAccountId" | "igAccountId", accountId: string) =>
+
+  const updatePostingAccount = useCallback(
+    (id: string, updates: Partial<PostingAccount>) =>
       setState((s) => ({
         ...s,
-        divisions: s.divisions.map((d) =>
-          d.abb === abb ? { ...d, [field]: accountId } : d
+        postingAccounts: s.postingAccounts.map((pa) =>
+          pa.id === id ? { ...pa, ...updates } : pa
         ),
       })),
     []
   );
-  const updateTierAccount = useCallback(
-    (conf: string, field: "fbAccountId" | "igAccountId", accountId: string) =>
+
+  const togglePostingAccount = useCallback(
+    (id: string) =>
+      setState((s) => ({
+        ...s,
+        postingAccounts: s.postingAccounts.map((pa) =>
+          pa.id === id ? { ...pa, checked: !pa.checked } : pa
+        ),
+      })),
+    []
+  );
+
+  const toggleAllPostingAccounts = useCallback(
+    (checked: boolean) =>
+      setState((s) => ({
+        ...s,
+        postingAccounts: s.postingAccounts.map((pa) => ({ ...pa, checked })),
+      })),
+    []
+  );
+
+  const movePostingAccount = useCallback(
+    (id: string, direction: "up" | "down") =>
       setState((s) => {
-        const existing: TierAccount = s.tierAccounts[conf] || {
-          fbAccountId: "",
-          igAccountId: "",
-        };
-        return {
-          ...s,
-          tierAccounts: {
-            ...s.tierAccounts,
-            [conf]: { ...existing, [field]: accountId },
-          },
-        };
+        const idx = s.postingAccounts.findIndex((pa) => pa.id === id);
+        if (idx === -1) return s;
+        const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= s.postingAccounts.length) return s;
+        const arr = [...s.postingAccounts];
+        [arr[idx], arr[swapIdx]] = [arr[swapIdx], arr[idx]];
+        return { ...s, postingAccounts: arr };
       }),
     []
   );
+
+  const assignDivision = useCallback(
+    (accountId: string, divAbb: string) =>
+      setState((s) => ({
+        ...s,
+        postingAccounts: s.postingAccounts.map((pa) =>
+          pa.id === accountId && !pa.divisionAbbs.includes(divAbb)
+            ? { ...pa, divisionAbbs: [...pa.divisionAbbs, divAbb] }
+            : pa
+        ),
+      })),
+    []
+  );
+
+  const unassignDivision = useCallback(
+    (accountId: string, divAbb: string) =>
+      setState((s) => ({
+        ...s,
+        postingAccounts: s.postingAccounts.map((pa) =>
+          pa.id === accountId
+            ? {
+                ...pa,
+                divisionAbbs: pa.divisionAbbs.filter((a) => a !== divAbb),
+              }
+            : pa
+        ),
+      })),
+    []
+  );
+
+  const toggleDivisionOnAccount = useCallback(
+    (accountId: string) => {
+      if (!selectedDivisionAbb) return;
+      setState((s) => ({
+        ...s,
+        postingAccounts: s.postingAccounts.map((pa) => {
+          if (pa.id !== accountId) return pa;
+          const has = pa.divisionAbbs.includes(selectedDivisionAbb);
+          return {
+            ...pa,
+            divisionAbbs: has
+              ? pa.divisionAbbs.filter((a) => a !== selectedDivisionAbb)
+              : [...pa.divisionAbbs, selectedDivisionAbb],
+          };
+        }),
+      }));
+      setSelectedDivisionAbb(null);
+    },
+    [selectedDivisionAbb]
+  );
+
+  // --- Post type actions ---
+
   const setPostTypes = useCallback(
     (types: PostType[]) => setState((s) => ({ ...s, postTypes: types })),
     []
@@ -369,20 +433,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         state,
         hasUnsavedChanges,
         saving,
+        selectedDivisionAbb,
+        setSelectedDivisionAbb,
+        savedDivisionsMap,
         saveSettings,
         setLeagueName,
         setCdnBaseUrl,
         setWeekNumber,
         setAccounts,
         setDivisions,
-        toggleDivision,
-        toggleAllDivisions,
-        addDivision,
-        removeDivision,
-        removeTierDivisions,
-        moveTier,
-        updateDivisionAccount,
-        updateTierAccount,
+        addPostingAccount,
+        removePostingAccount,
+        updatePostingAccount,
+        togglePostingAccount,
+        toggleAllPostingAccounts,
+        movePostingAccount,
+        assignDivision,
+        unassignDivision,
+        toggleDivisionOnAccount,
         setPostTypes,
         updatePostType,
         addPostType,

@@ -57,41 +57,7 @@ export function parseDivisionsCsv(csvText: string): Division[] {
       div: r[1].trim(),
       abb: r[2].trim(),
       color1: r[3]?.trim() || undefined,
-      checked: true,
-      fbAccountId: "",
-      igAccountId: "",
     }));
-}
-
-/**
- * Collect unique conf/tier names from the division list (preserving order).
- */
-export function getTierNames(divisions: Division[]): string[] {
-  const seen = new Set<string>();
-  const names: string[] = [];
-  for (const d of divisions) {
-    if (d.conf && !seen.has(d.conf)) {
-      seen.add(d.conf);
-      names.push(d.conf);
-    }
-  }
-  return names;
-}
-
-/**
- * Group divisions by conf (tier).
- */
-export function groupByTier(
-  divisions: Division[]
-): Map<string, Division[]> {
-  const map = new Map<string, Division[]>();
-  for (const d of divisions) {
-    const key = d.conf || "(ungrouped)";
-    const list = map.get(key) || [];
-    list.push(d);
-    map.set(key, list);
-  }
-  return map;
 }
 
 /**
@@ -127,16 +93,21 @@ function divImageUrl(
 /**
  * Generate SocialPilot-compatible CSV rows from the current app state.
  *
- * Divisions sharing the same account ID are grouped into one post with
- * combined image URLs (semicolon-separated). This covers both location
- * accounts (per-division) and tier accounts.
+ * Iterates checked posting accounts. For each account, gathers the assigned
+ * divisions, builds combined image URLs, and picks the caption template
+ * based on account type (location vs tier).
  */
 export function generateCsvRows(state: AppState): CsvRow[] {
   const rows: CsvRow[] = [];
   const enabledTypes = state.postTypes.filter((pt) => pt.enabled);
-  const checkedDivs = state.divisions.filter((d) => d.checked);
+  const checkedAccounts = state.postingAccounts.filter((pa) => pa.checked);
 
-  if (!checkedDivs.length) return rows;
+  if (!checkedAccounts.length) return rows;
+
+  const divMap = new Map<string, Division>();
+  for (const d of state.divisions) {
+    divMap.set(d.abb, d);
+  }
 
   for (const postType of enabledTypes) {
     const postTime = formatPostTime(
@@ -144,82 +115,49 @@ export function generateCsvRows(state: AppState): CsvRow[] {
       postType.defaultTime
     );
 
-    // --- Division/location account rows (grouped by account ID) ---
-    const locationDivs = new Map<string, Division[]>();
+    for (const account of checkedAccounts) {
+      if (!account.fbAccountId && !account.igAccountId) continue;
+      if (!account.divisionAbbs.length) continue;
 
-    for (const div of checkedDivs) {
-      if (div.fbAccountId) {
-        const list = locationDivs.get(div.fbAccountId) || [];
-        list.push(div);
-        locationDivs.set(div.fbAccountId, list);
-      }
-      if (div.igAccountId) {
-        const list = locationDivs.get(div.igAccountId) || [];
-        list.push(div);
-        locationDivs.set(div.igAccountId, list);
-      }
-    }
+      const divs = account.divisionAbbs
+        .map((abb) => divMap.get(abb))
+        .filter((d): d is Division => !!d);
 
-    for (const [accountId, divs] of locationDivs) {
+      if (!divs.length) continue;
+
       const imageUrls = divs.map((d) => divImageUrl(state, postType, d));
-      const imageUrlStr = imageUrls.join("; ");
-      const firstDiv = divs[0];
-
-      const caption = renderCaption(postType.captionTemplate, {
-        divAbb: divs.length === 1 ? firstDiv.abb : "",
-        divName: firstDiv.div,
-        conf: firstDiv.conf,
-        week: state.weekNumber,
-        type: postType.label,
-      });
-
-      rows.push({
-        caption,
-        imageUrl: imageUrlStr,
-        postTime,
-        accountId,
-        firstComment: "",
-        tags: "",
-      });
-    }
-
-    // --- Tier account rows (one per tier, using tier caption) ---
-    const tierGroups = groupByTier(checkedDivs);
-    for (const [conf, tierDivisions] of tierGroups) {
-      const ta = state.tierAccounts[conf];
-      if (!ta || (!ta.fbAccountId && !ta.igAccountId)) continue;
-
-      const imageUrls = tierDivisions.map((d) =>
-        divImageUrl(state, postType, d)
-      );
       const imageUrlStr = imageUrls.join("; ");
 
       const template =
-        postType.tierCaptionTemplate || postType.captionTemplate;
+        account.type === "tier"
+          ? postType.tierCaptionTemplate || postType.captionTemplate
+          : postType.captionTemplate;
+
+      const firstDiv = divs[0];
       const caption = renderCaption(template, {
-        divAbb: "",
-        divName: conf,
-        conf,
+        divAbb: divs.length === 1 ? firstDiv.abb : "",
+        divName: account.name,
+        conf: account.name,
         week: state.weekNumber,
         type: postType.label,
       });
 
-      if (ta.fbAccountId) {
+      if (account.fbAccountId) {
         rows.push({
           caption,
           imageUrl: imageUrlStr,
           postTime,
-          accountId: ta.fbAccountId,
+          accountId: account.fbAccountId,
           firstComment: "",
           tags: "",
         });
       }
-      if (ta.igAccountId) {
+      if (account.igAccountId) {
         rows.push({
           caption,
           imageUrl: imageUrlStr,
           postTime,
-          accountId: ta.igAccountId,
+          accountId: account.igAccountId,
           firstComment: "",
           tags: "",
         });
