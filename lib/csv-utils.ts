@@ -190,5 +190,5 @@ export function rowsToCsvString(rows: CsvRow[]): string {
     tags: r.tags,
   }));
 
-  return Papa.unparse(data);
+  return Papa.unparse(data, { header: false });
 }
