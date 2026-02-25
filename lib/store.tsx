@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import {
@@ -20,6 +21,14 @@ import {
 
 const STORAGE_KEY = "social-bulk-poster-state";
 
+interface SavedSettings {
+  accounts: SocialAccount[];
+  divisions: Division[];
+  tierAccounts: Record<string, TierAccount>;
+  leagueName: string;
+  cdnBaseUrl: string;
+}
+
 function getInitialState(): AppState {
   return {
     leagueName: "",
@@ -32,8 +41,22 @@ function getInitialState(): AppState {
   };
 }
 
+function settingsSnapshot(state: AppState): string {
+  const s: SavedSettings = {
+    accounts: state.accounts,
+    divisions: state.divisions,
+    tierAccounts: state.tierAccounts,
+    leagueName: state.leagueName,
+    cdnBaseUrl: state.cdnBaseUrl,
+  };
+  return JSON.stringify(s);
+}
+
 interface StoreContextValue {
   state: AppState;
+  hasUnsavedChanges: boolean;
+  saving: boolean;
+  saveSettings: () => void;
   setLeagueName: (name: string) => void;
   setCdnBaseUrl: (url: string) => void;
   setWeekNumber: (week: number) => void;
@@ -65,18 +88,57 @@ const StoreContext = createContext<StoreContextValue | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(getInitialState);
   const [hydrated, setHydrated] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState("");
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as Partial<AppState>;
-        setState((prev) => ({ ...prev, ...parsed }));
+    async function hydrate() {
+      let base = getInitialState();
+
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const saved: SavedSettings = await res.json();
+          if (saved.accounts?.length || saved.divisions?.length) {
+            base = {
+              ...base,
+              accounts: saved.accounts || [],
+              divisions: saved.divisions || [],
+              tierAccounts: saved.tierAccounts || {},
+              leagueName: saved.leagueName || "",
+              cdnBaseUrl: saved.cdnBaseUrl || DEFAULT_CDN_BASE_URL,
+            };
+          }
+        }
+      } catch {
+        // API not available (local dev without blob token), fall through
       }
-    } catch {
-      // ignore corrupt storage
+
+      try {
+        const local = localStorage.getItem(STORAGE_KEY);
+        if (local) {
+          const parsed = JSON.parse(local) as Partial<AppState>;
+          if (base.accounts.length === 0 && base.divisions.length === 0) {
+            base = { ...base, ...parsed };
+          } else {
+            base = {
+              ...base,
+              weekNumber: parsed.weekNumber ?? base.weekNumber,
+              postTypes: parsed.postTypes ?? base.postTypes,
+            };
+          }
+        }
+      } catch {
+        // ignore corrupt localStorage
+      }
+
+      setState(base);
+      setSavedSnapshot(settingsSnapshot(base));
+      initialLoadDone.current = true;
+      setHydrated(true);
     }
-    setHydrated(true);
+
+    hydrate();
   }, []);
 
   useEffect(() => {
@@ -84,6 +146,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
   }, [state, hydrated]);
+
+  const hasUnsavedChanges =
+    hydrated && settingsSnapshot(state) !== savedSnapshot;
+
+  const [saving, setSaving] = useState(false);
+
+  const saveSettings = useCallback(async () => {
+    const s: SavedSettings = {
+      accounts: state.accounts,
+      divisions: state.divisions,
+      tierAccounts: state.tierAccounts,
+      leagueName: state.leagueName,
+      cdnBaseUrl: state.cdnBaseUrl,
+    };
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(s),
+      });
+      if (res.ok) {
+        setSavedSnapshot(settingsSnapshot(state));
+      }
+    } catch {
+      // silently fail for now
+    } finally {
+      setSaving(false);
+    }
+  }, [state]);
 
   const setLeagueName = useCallback(
     (name: string) => setState((s) => ({ ...s, leagueName: name })),
@@ -231,6 +323,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     <StoreContext.Provider
       value={{
         state,
+        hasUnsavedChanges,
+        saving,
+        saveSettings,
         setLeagueName,
         setCdnBaseUrl,
         setWeekNumber,
