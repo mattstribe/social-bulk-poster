@@ -96,15 +96,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         const res = await fetch("/api/settings");
         if (res.ok) {
-          const saved: SavedSettings = await res.json();
+          const saved = (await res.json()) as SavedSettings & {
+            cdnBaseUrl?: string;
+          };
+          if (saved.cdnBaseUrl) {
+            base = { ...base, cdnBaseUrl: saved.cdnBaseUrl };
+          }
           if (saved.accounts?.length || saved.divisions?.length) {
             base = {
               ...base,
               accounts: saved.accounts || [],
               divisions: saved.divisions || [],
               tierAccounts: saved.tierAccounts || {},
-              leagueName: saved.leagueName || "",
-              cdnBaseUrl: saved.cdnBaseUrl || base.cdnBaseUrl,
+              leagueName: saved.leagueName || base.leagueName,
             };
           }
         }
