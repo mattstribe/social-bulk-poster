@@ -96,9 +96,10 @@ export function groupByTier(
 
 /**
  * Generate SocialPilot-compatible CSV rows from the current app state.
- * Groups divisions by tier. Each tier produces one post per post type,
- * combining image URLs for all checked divisions in the tier.
- * Accounts come from the divisions (all divisions in a tier share accounts).
+ *
+ * Per-division rows: each division with linked accounts gets its own post(s).
+ * Per-tier rows: the tier account gets a combined post with all checked
+ * division images (semicolon-separated URLs).
  */
 export function generateCsvRows(state: AppState): CsvRow[] {
   const rows: CsvRow[] = [];
@@ -106,86 +107,136 @@ export function generateCsvRows(state: AppState): CsvRow[] {
   const tierGroups = groupByTier(state.divisions);
 
   for (const postType of enabledTypes) {
-    for (const [tierName, tierDivisions] of tierGroups) {
+    for (const [conf, tierDivisions] of tierGroups) {
       const checkedDivs = tierDivisions.filter((d) => d.checked);
       if (!checkedDivs.length) continue;
 
-      const fbAccountId = checkedDivs.find((d) => d.fbAccountId)?.fbAccountId || "";
-      const igAccountId = checkedDivs.find((d) => d.igAccountId)?.igAccountId || "";
-
-      if (!fbAccountId && !igAccountId) continue;
-
       const hasFilenamePattern = !!postType.filenamePattern.trim();
-      const imageUrls: string[] = [];
-      let caption = "";
+      const postTime = formatPostTime(
+        postType.defaultDate,
+        postType.defaultTime
+      );
 
-      if (hasFilenamePattern) {
-        for (const div of checkedDivs) {
+      // --- Per-division rows ---
+      for (const div of checkedDivs) {
+        if (!div.fbAccountId && !div.igAccountId) continue;
+
+        let imageUrl = "";
+        let caption = "";
+
+        if (hasFilenamePattern) {
           const filename = resolveFilenamePattern(
             postType.filenamePattern,
             div.abb
           );
-          const url = buildCdnUrl(
+          imageUrl = buildCdnUrl(
             state.cdnBaseUrl,
             state.leagueName,
             state.weekNumber,
             postType.cdnFolder,
             filename
           );
-          imageUrls.push(url);
+        } else {
+          imageUrl = buildCdnUrl(
+            state.cdnBaseUrl,
+            state.leagueName,
+            state.weekNumber,
+            postType.cdnFolder,
+            ""
+          );
         }
 
-        const firstDiv = checkedDivs[0];
         caption = renderCaption(postType.captionTemplate, {
-          divAbb: firstDiv.abb,
-          divName: firstDiv.div,
-          conf: firstDiv.conf,
+          divAbb: div.abb,
+          divName: div.div,
+          conf: div.conf,
           week: state.weekNumber,
           league: state.leagueName,
           type: postType.label,
         });
-      } else {
-        const folderUrl = buildCdnUrl(
-          state.cdnBaseUrl,
-          state.leagueName,
-          state.weekNumber,
-          postType.cdnFolder,
-          ""
-        );
-        imageUrls.push(folderUrl);
-        caption = renderCaption(postType.captionTemplate, {
-          divAbb: "",
-          divName: tierName,
-          conf: tierName,
-          week: state.weekNumber,
-          league: state.leagueName,
-          type: postType.label,
-        });
+
+        if (div.fbAccountId) {
+          rows.push({
+            caption,
+            imageUrl,
+            postTime,
+            accountId: div.fbAccountId,
+            firstComment: "",
+            tags: "",
+          });
+        }
+        if (div.igAccountId) {
+          rows.push({
+            caption,
+            imageUrl,
+            postTime,
+            accountId: div.igAccountId,
+            firstComment: "",
+            tags: "",
+          });
+        }
       }
 
-      const imageUrlStr = imageUrls.join("; ");
-      const postTime = formatPostTime(
-        postType.defaultDate,
-        postType.defaultTime
-      );
+      // --- Tier-level combined row ---
+      const ta = state.tierAccounts[conf];
+      if (!ta || (!ta.fbAccountId && !ta.igAccountId)) continue;
 
-      if (fbAccountId) {
+      const tierImageUrls: string[] = [];
+      for (const div of checkedDivs) {
+        if (hasFilenamePattern) {
+          const filename = resolveFilenamePattern(
+            postType.filenamePattern,
+            div.abb
+          );
+          tierImageUrls.push(
+            buildCdnUrl(
+              state.cdnBaseUrl,
+              state.leagueName,
+              state.weekNumber,
+              postType.cdnFolder,
+              filename
+            )
+          );
+        } else {
+          tierImageUrls.push(
+            buildCdnUrl(
+              state.cdnBaseUrl,
+              state.leagueName,
+              state.weekNumber,
+              postType.cdnFolder,
+              ""
+            )
+          );
+        }
+      }
+
+      const tierImageUrlStr = tierImageUrls.join("; ");
+      const firstDiv = checkedDivs[0];
+      const tierCaption = renderCaption(postType.captionTemplate, {
+        divAbb: "",
+        divName: conf,
+        conf,
+        week: state.weekNumber,
+        league: state.leagueName,
+        type: postType.label,
+      });
+
+      if (ta.fbAccountId) {
         rows.push({
-          caption,
-          imageUrl: imageUrlStr,
+          caption: tierCaption,
+          imageUrl: tierImageUrlStr,
           postTime,
-          accountId: fbAccountId,
+          accountId: ta.fbAccountId,
           firstComment: "",
           tags: "",
         });
       }
-
-      if (igAccountId) {
+      if (ta.igAccountId) {
         rows.push({
-          caption,
-          imageUrl: imageUrlStr,
+          caption: tierCaption,
+          imageUrl: tierImageUrlStr,
           postTime,
-          accountId: igAccountId,
+          accountId: ta.igAccountId,
           firstComment: "",
           tags: "",
         });

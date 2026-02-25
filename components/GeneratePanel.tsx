@@ -31,9 +31,13 @@ export default function GeneratePanel() {
     URL.revokeObjectURL(url);
   }, [rows, state.leagueName, state.weekNumber]);
 
-  const hasLinkedAccounts = state.divisions.some(
+  const hasLinkedDivAccounts = state.divisions.some(
     (d) => d.fbAccountId || d.igAccountId
   );
+  const hasLinkedTierAccounts = Object.values(state.tierAccounts).some(
+    (ta) => ta.fbAccountId || ta.igAccountId
+  );
+  const hasLinkedAccounts = hasLinkedDivAccounts || hasLinkedTierAccounts;
 
   const canGenerate =
     state.leagueName.trim() !== "" &&

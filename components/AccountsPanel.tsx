@@ -50,48 +50,57 @@ export default function AccountsPanel() {
           Upload your SocialPilot account list CSV to get started.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {fbAccounts.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-blue-600">
-                Facebook ({fbAccounts.length})
-              </h3>
-              <div className="space-y-1">
-                {fbAccounts.map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center gap-2 rounded bg-zinc-50 px-2 py-1 text-sm dark:bg-zinc-800"
-                  >
-                    <span className="font-mono text-xs text-zinc-400">
-                      {a.id}
-                    </span>
-                    <span className="truncate">{a.name}</span>
-                  </div>
-                ))}
+        <>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {fbAccounts.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-blue-600">
+                  Facebook ({fbAccounts.length})
+                </h3>
+                <div className="space-y-1">
+                  {fbAccounts.map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-center gap-2 rounded bg-zinc-50 px-2 py-1 text-sm dark:bg-zinc-800"
+                    >
+                      <span className="font-mono text-xs text-zinc-400">
+                        {a.id}
+                      </span>
+                      <span className="truncate">{a.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          {igAccounts.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-pink-600">
-                Instagram ({igAccounts.length})
-              </h3>
-              <div className="space-y-1">
-                {igAccounts.map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center gap-2 rounded bg-zinc-50 px-2 py-1 text-sm dark:bg-zinc-800"
-                  >
-                    <span className="font-mono text-xs text-zinc-400">
-                      {a.id}
-                    </span>
-                    <span className="truncate">{a.name}</span>
-                  </div>
-                ))}
+            )}
+            {igAccounts.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-sm font-semibold text-pink-600">
+                  Instagram ({igAccounts.length})
+                </h3>
+                <div className="space-y-1">
+                  {igAccounts.map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-center gap-2 rounded bg-zinc-50 px-2 py-1 text-sm dark:bg-zinc-800"
+                    >
+                      <span className="font-mono text-xs text-zinc-400">
+                        {a.id}
+                      </span>
+                      <span className="truncate">{a.name}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setAccounts([])}
+            className="mt-3 text-xs text-red-500 hover:underline"
+          >
+            Clear accounts
+          </button>
+        </>
       )}
     </section>
   );

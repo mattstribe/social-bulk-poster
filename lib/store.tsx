@@ -13,6 +13,7 @@ import {
   type SocialAccount,
   type Division,
   type PostType,
+  type TierAccount,
   DEFAULT_CDN_BASE_URL,
   DEFAULT_POST_TYPES,
 } from "./types";
@@ -26,6 +27,7 @@ function getInitialState(): AppState {
     weekNumber: 1,
     accounts: [],
     divisions: [],
+    tierAccounts: {},
     postTypes: DEFAULT_POST_TYPES,
   };
 }
@@ -41,6 +43,11 @@ interface StoreContextValue {
   toggleAllDivisions: (checked: boolean) => void;
   updateDivisionAccount: (
     abb: string,
+    field: "fbAccountId" | "igAccountId",
+    accountId: string
+  ) => void;
+  updateTierAccount: (
+    conf: string,
     field: "fbAccountId" | "igAccountId",
     accountId: string
   ) => void;
@@ -123,6 +130,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })),
     []
   );
+  const updateTierAccount = useCallback(
+    (conf: string, field: "fbAccountId" | "igAccountId", accountId: string) =>
+      setState((s) => {
+        const existing: TierAccount = s.tierAccounts[conf] || {
+          fbAccountId: "",
+          igAccountId: "",
+        };
+        return {
+          ...s,
+          tierAccounts: {
+            ...s.tierAccounts,
+            [conf]: { ...existing, [field]: accountId },
+          },
+        };
+      }),
+    []
+  );
   const setPostTypes = useCallback(
     (types: PostType[]) => setState((s) => ({ ...s, postTypes: types })),
     []
@@ -181,6 +205,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         toggleDivision,
         toggleAllDivisions,
         updateDivisionAccount,
+        updateTierAccount,
         setPostTypes,
         updatePostType,
         addPostType,

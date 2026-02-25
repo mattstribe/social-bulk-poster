@@ -27,12 +27,18 @@ export interface PostType {
   isBuiltIn: boolean;
 }
 
+export interface TierAccount {
+  fbAccountId: string;
+  igAccountId: string;
+}
+
 export interface AppState {
   leagueName: string;
   cdnBaseUrl: string;
   weekNumber: number;
   accounts: SocialAccount[];
   divisions: Division[];
+  tierAccounts: Record<string, TierAccount>;
   postTypes: PostType[];
 }
 

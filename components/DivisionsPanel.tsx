@@ -54,7 +54,7 @@ export default function DivisionsPanel() {
 
       {state.divisions.length === 0 ? (
         <p className="text-sm text-zinc-500">
-          Upload a division CSV (Conference, Division, Abbreviation, Tier).
+          Upload a division CSV (Conference/Tier, Division, Abbreviation).
         </p>
       ) : (
         <>
@@ -72,10 +72,10 @@ export default function DivisionsPanel() {
           </div>
 
           <div className="space-y-3">
-            {[...grouped.entries()].map(([tierName, divs]) => (
-              <div key={tierName}>
+            {[...grouped.entries()].map(([confName, divs]) => (
+              <div key={confName}>
                 <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-zinc-500">
-                  {tierName}
+                  {confName}
                 </h3>
                 <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
                   {divs.map((d) => (
@@ -105,6 +105,13 @@ export default function DivisionsPanel() {
               </div>
             ))}
           </div>
+
+          <button
+            onClick={() => setDivisions([])}
+            className="mt-3 text-xs text-red-500 hover:underline"
+          >
+            Clear divisions
+          </button>
         </>
       )}
     </section>
