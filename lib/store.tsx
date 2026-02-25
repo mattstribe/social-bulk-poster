@@ -147,8 +147,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state, hydrated]);
 
+  const hasData =
+    state.divisions.length > 0 || state.accounts.length > 0;
   const hasUnsavedChanges =
-    hydrated && settingsSnapshot(state) !== savedSnapshot;
+    hydrated && hasData && settingsSnapshot(state) !== savedSnapshot;
 
   const [saving, setSaving] = useState(false);
 

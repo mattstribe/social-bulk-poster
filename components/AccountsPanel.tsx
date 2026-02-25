@@ -66,7 +66,15 @@ export default function AccountsPanel() {
                       <span className="font-mono text-xs text-zinc-400">
                         {a.id}
                       </span>
-                      <span className="truncate">{a.name}</span>
+                      <span className="flex-1 truncate">{a.name}</span>
+                      <button
+                        onClick={() =>
+                          setAccounts(state.accounts.filter((x) => x.id !== a.id))
+                        }
+                        className="text-zinc-300 transition-colors hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400"
+                      >
+                        &times;
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -86,7 +94,15 @@ export default function AccountsPanel() {
                       <span className="font-mono text-xs text-zinc-400">
                         {a.id}
                       </span>
-                      <span className="truncate">{a.name}</span>
+                      <span className="flex-1 truncate">{a.name}</span>
+                      <button
+                        onClick={() =>
+                          setAccounts(state.accounts.filter((x) => x.id !== a.id))
+                        }
+                        className="text-zinc-300 transition-colors hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400"
+                      >
+                        &times;
+                      </button>
                     </div>
                   ))}
                 </div>
