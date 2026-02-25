@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { groupByTier, parseDivisionsCsv } from "@/lib/csv-utils";
 
@@ -8,11 +8,16 @@ export default function AccountLinker() {
   const {
     state,
     setDivisions,
+    addDivision,
     removeDivision,
     removeTierDivisions,
     updateDivisionAccount,
     updateTierAccount,
   } = useStore();
+
+  const [newTier, setNewTier] = useState("");
+  const [newAbb, setNewAbb] = useState("");
+  const [newDiv, setNewDiv] = useState("");
 
   const fbAccounts = useMemo(
     () => state.accounts.filter((a) => a.platform === "Facebook Page"),
@@ -47,6 +52,17 @@ export default function AccountLinker() {
     [setDivisions, state.divisions]
   );
 
+  const handleAddDivision = useCallback(() => {
+    const tier = newTier.trim();
+    const abb = newAbb.trim();
+    const div = newDiv.trim();
+    if (!tier || !abb || !div) return;
+    if (state.divisions.some((d) => d.abb === abb)) return;
+    addDivision(tier, div, abb);
+    setNewAbb("");
+    setNewDiv("");
+  }, [newTier, newAbb, newDiv, addDivision, state.divisions]);
+
   const linkedDivs = state.divisions.filter(
     (d) => d.fbAccountId || d.igAccountId
   ).length;
@@ -79,10 +95,63 @@ export default function AccountLinker() {
         </div>
       </div>
 
+      {/* Add division form */}
+      <div className="mb-4 flex flex-wrap items-end gap-2">
+        <div>
+          <label className="mb-0.5 block text-xs text-zinc-500">Tier</label>
+          <input
+            type="text"
+            value={newTier}
+            onChange={(e) => setNewTier(e.target.value)}
+            placeholder="e.g. Tier 1"
+            list="existing-tiers"
+            className="w-28 rounded border border-zinc-300 bg-zinc-50 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800"
+          />
+          <datalist id="existing-tiers">
+            {[...tierGroups.keys()].map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
+        </div>
+        <div>
+          <label className="mb-0.5 block text-xs text-zinc-500">Abb</label>
+          <input
+            type="text"
+            value={newAbb}
+            onChange={(e) => setNewAbb(e.target.value)}
+            placeholder="e.g. VICM12"
+            className="w-24 rounded border border-zinc-300 bg-zinc-50 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="mb-0.5 block text-xs text-zinc-500">
+            Division Name
+          </label>
+          <input
+            type="text"
+            value={newDiv}
+            onChange={(e) => setNewDiv(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleAddDivision();
+              }
+            }}
+            placeholder="e.g. Victoria Monarchs"
+            className="w-full rounded border border-zinc-300 bg-zinc-50 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800"
+          />
+        </div>
+        <button
+          onClick={handleAddDivision}
+          disabled={!newTier.trim() || !newAbb.trim() || !newDiv.trim()}
+          className="rounded-md bg-zinc-700 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          + Add
+        </button>
+      </div>
+
       {state.divisions.length === 0 ? (
         <p className="text-sm text-zinc-500">
-          Upload a division CSV (Conference/Tier, Division, Abbreviation) to get
-          started.
+          Upload a division CSV or add divisions manually above.
         </p>
       ) : (
         <div className="space-y-4">

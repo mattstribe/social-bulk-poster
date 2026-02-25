@@ -41,6 +41,7 @@ interface StoreContextValue {
   setDivisions: (divisions: Division[]) => void;
   toggleDivision: (abb: string) => void;
   toggleAllDivisions: (checked: boolean) => void;
+  addDivision: (conf: string, div: string, abb: string) => void;
   removeDivision: (abb: string) => void;
   removeTierDivisions: (conf: string) => void;
   updateDivisionAccount: (
@@ -119,6 +120,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setState((s) => ({
         ...s,
         divisions: s.divisions.map((d) => ({ ...d, checked })),
+      })),
+    []
+  );
+  const addDivision = useCallback(
+    (conf: string, div: string, abb: string) =>
+      setState((s) => ({
+        ...s,
+        divisions: [
+          ...s.divisions,
+          { conf, div, abb, checked: true, fbAccountId: "", igAccountId: "" },
+        ],
       })),
     []
   );
@@ -226,6 +238,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setDivisions,
         toggleDivision,
         toggleAllDivisions,
+        addDivision,
         removeDivision,
         removeTierDivisions,
         updateDivisionAccount,
