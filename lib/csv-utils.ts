@@ -30,7 +30,7 @@ export function parseAccountsCsv(csvText: string): SocialAccount[] {
 
 /**
  * Parse a division info CSV with tier structure.
- * Columns: Conference, Division, Abbreviation, Tier [, Color 1, ...]
+ * Columns: Tier, Division, Abbreviation, Color 1, ...
  * Detects header row automatically.
  */
 export function parseDivisionsCsv(csvText: string): Division[] {
@@ -53,11 +53,10 @@ export function parseDivisionsCsv(csvText: string): Division[] {
   return dataRows
     .filter((r) => r[0] && r[1] && r[2])
     .map((r) => ({
-      conf: r[0].trim(),
+      tier: r[0].trim(),
       div: r[1].trim(),
       abb: r[2].trim(),
-      tier: r[3]?.trim() || "",
-      color1: r[4]?.trim() || undefined,
+      color1: r[3]?.trim() || "",
       checked: true,
       fbAccountId: "",
       igAccountId: "",
