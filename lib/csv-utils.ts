@@ -57,7 +57,8 @@ export function parseDivisionsCsv(csvText: string): Division[] {
       div: r[1].trim(),
       abb: r[2].trim(),
       color1: r[3]?.trim() || undefined,
-    }));
+    }))
+    .sort((a, b) => a.abb.localeCompare(b.abb));
 }
 
 /**
