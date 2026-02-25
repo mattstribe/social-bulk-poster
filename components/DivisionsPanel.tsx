@@ -27,10 +27,9 @@ export default function DivisionsPanel() {
   const grouped = useMemo(() => {
     const map = new Map<string, typeof state.divisions>();
     for (const div of state.divisions) {
-      const key = div.tier || div.conf;
-      const list = map.get(key) || [];
+      const list = map.get(div.conf) || [];
       list.push(div);
-      map.set(key, list);
+      map.set(div.conf, list);
     }
     return map;
   }, [state.divisions]);

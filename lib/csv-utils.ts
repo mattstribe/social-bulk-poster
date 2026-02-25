@@ -29,8 +29,8 @@ export function parseAccountsCsv(csvText: string): SocialAccount[] {
 }
 
 /**
- * Parse a division info CSV with tier structure.
- * Columns: Tier, Division, Abbreviation, Color 1, ...
+ * Parse a division info CSV.
+ * Columns: Conference/Tier, Division, Abbreviation [, Color 1, ...]
  * Detects header row automatically.
  */
 export function parseDivisionsCsv(csvText: string): Division[] {
@@ -53,10 +53,10 @@ export function parseDivisionsCsv(csvText: string): Division[] {
   return dataRows
     .filter((r) => r[0] && r[1] && r[2])
     .map((r) => ({
-      tier: r[0].trim(),
+      conf: r[0].trim(),
       div: r[1].trim(),
       abb: r[2].trim(),
-      color1: r[3]?.trim() || "",
+      color1: r[3]?.trim() || undefined,
       checked: true,
       fbAccountId: "",
       igAccountId: "",
@@ -64,29 +64,29 @@ export function parseDivisionsCsv(csvText: string): Division[] {
 }
 
 /**
- * Collect unique tier names from the division list (preserving order).
+ * Collect unique conf/tier names from the division list (preserving order).
  */
 export function getTierNames(divisions: Division[]): string[] {
   const seen = new Set<string>();
   const names: string[] = [];
   for (const d of divisions) {
-    if (d.tier && !seen.has(d.tier)) {
-      seen.add(d.tier);
-      names.push(d.tier);
+    if (d.conf && !seen.has(d.conf)) {
+      seen.add(d.conf);
+      names.push(d.conf);
     }
   }
   return names;
 }
 
 /**
- * Group divisions by tier name.
+ * Group divisions by conf (tier).
  */
 export function groupByTier(
   divisions: Division[]
 ): Map<string, Division[]> {
   const map = new Map<string, Division[]>();
   for (const d of divisions) {
-    const key = d.tier || "(no tier)";
+    const key = d.conf || "(ungrouped)";
     const list = map.get(key) || [];
     list.push(d);
     map.set(key, list);

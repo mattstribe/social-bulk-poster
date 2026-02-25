@@ -9,7 +9,6 @@ export interface Division {
   conf: string;
   div: string;
   abb: string;
-  tier: string;
   color1?: string;
   checked: boolean;
   fbAccountId: string;
