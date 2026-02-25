@@ -51,7 +51,7 @@ export default function AccountsPanel() {
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-4">
             {fbAccounts.length > 0 && (
               <div>
                 <h3 className="mb-2 text-sm font-semibold text-blue-600">
