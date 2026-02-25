@@ -95,152 +95,116 @@ export function groupByTier(
 }
 
 /**
+ * Build the image URL for a division + post type combo.
+ */
+function divImageUrl(
+  state: AppState,
+  postType: PostType,
+  div: Division
+): string {
+  if (postType.filenamePattern.trim()) {
+    const filename = resolveFilenamePattern(
+      postType.filenamePattern,
+      div.abb
+    );
+    return buildCdnUrl(
+      state.cdnBaseUrl,
+      state.leagueName,
+      state.weekNumber,
+      postType.cdnFolder,
+      filename
+    );
+  }
+  return buildCdnUrl(
+    state.cdnBaseUrl,
+    state.leagueName,
+    state.weekNumber,
+    postType.cdnFolder,
+    ""
+  );
+}
+
+/**
  * Generate SocialPilot-compatible CSV rows from the current app state.
  *
- * Per-division rows: each division with linked accounts gets its own post(s).
- * Per-tier rows: the tier account gets a combined post with all checked
- * division images (semicolon-separated URLs).
+ * Divisions sharing the same account ID are grouped into one post with
+ * combined image URLs (semicolon-separated). This covers both location
+ * accounts (per-division) and tier accounts.
  */
 export function generateCsvRows(state: AppState): CsvRow[] {
   const rows: CsvRow[] = [];
   const enabledTypes = state.postTypes.filter((pt) => pt.enabled);
-  const tierGroups = groupByTier(state.divisions);
+  const checkedDivs = state.divisions.filter((d) => d.checked);
+
+  if (!checkedDivs.length) return rows;
 
   for (const postType of enabledTypes) {
+    const postTime = formatPostTime(
+      postType.defaultDate,
+      postType.defaultTime
+    );
+
+    // Collect every (accountId → divisions[]) pair from both
+    // division-level and tier-level assignments.
+    const accountDivs = new Map<string, Division[]>();
+
+    for (const div of checkedDivs) {
+      if (div.fbAccountId) {
+        const list = accountDivs.get(div.fbAccountId) || [];
+        list.push(div);
+        accountDivs.set(div.fbAccountId, list);
+      }
+      if (div.igAccountId) {
+        const list = accountDivs.get(div.igAccountId) || [];
+        list.push(div);
+        accountDivs.set(div.igAccountId, list);
+      }
+    }
+
+    // Tier-level accounts: all checked divisions in that tier
+    const tierGroups = groupByTier(checkedDivs);
     for (const [conf, tierDivisions] of tierGroups) {
-      const checkedDivs = tierDivisions.filter((d) => d.checked);
-      if (!checkedDivs.length) continue;
-
-      const hasFilenamePattern = !!postType.filenamePattern.trim();
-      const postTime = formatPostTime(
-        postType.defaultDate,
-        postType.defaultTime
-      );
-
-      // --- Per-division rows ---
-      for (const div of checkedDivs) {
-        if (!div.fbAccountId && !div.igAccountId) continue;
-
-        let imageUrl = "";
-        let caption = "";
-
-        if (hasFilenamePattern) {
-          const filename = resolveFilenamePattern(
-            postType.filenamePattern,
-            div.abb
-          );
-          imageUrl = buildCdnUrl(
-            state.cdnBaseUrl,
-            state.leagueName,
-            state.weekNumber,
-            postType.cdnFolder,
-            filename
-          );
-        } else {
-          imageUrl = buildCdnUrl(
-            state.cdnBaseUrl,
-            state.leagueName,
-            state.weekNumber,
-            postType.cdnFolder,
-            ""
-          );
-        }
-
-        caption = renderCaption(postType.captionTemplate, {
-          divAbb: div.abb,
-          divName: div.div,
-          conf: div.conf,
-          week: state.weekNumber,
-          league: state.leagueName,
-          type: postType.label,
-        });
-
-        if (div.fbAccountId) {
-          rows.push({
-            caption,
-            imageUrl,
-            postTime,
-            accountId: div.fbAccountId,
-            firstComment: "",
-            tags: "",
-          });
-        }
-        if (div.igAccountId) {
-          rows.push({
-            caption,
-            imageUrl,
-            postTime,
-            accountId: div.igAccountId,
-            firstComment: "",
-            tags: "",
-          });
-        }
-      }
-
-      // --- Tier-level combined row ---
       const ta = state.tierAccounts[conf];
-      if (!ta || (!ta.fbAccountId && !ta.igAccountId)) continue;
-
-      const tierImageUrls: string[] = [];
-      for (const div of checkedDivs) {
-        if (hasFilenamePattern) {
-          const filename = resolveFilenamePattern(
-            postType.filenamePattern,
-            div.abb
-          );
-          tierImageUrls.push(
-            buildCdnUrl(
-              state.cdnBaseUrl,
-              state.leagueName,
-              state.weekNumber,
-              postType.cdnFolder,
-              filename
-            )
-          );
-        } else {
-          tierImageUrls.push(
-            buildCdnUrl(
-              state.cdnBaseUrl,
-              state.leagueName,
-              state.weekNumber,
-              postType.cdnFolder,
-              ""
-            )
-          );
+      if (!ta) continue;
+      if (ta.fbAccountId) {
+        const list = accountDivs.get(ta.fbAccountId) || [];
+        for (const d of tierDivisions) {
+          if (!list.some((x) => x.abb === d.abb)) list.push(d);
         }
+        accountDivs.set(ta.fbAccountId, list);
       }
+      if (ta.igAccountId) {
+        const list = accountDivs.get(ta.igAccountId) || [];
+        for (const d of tierDivisions) {
+          if (!list.some((x) => x.abb === d.abb)) list.push(d);
+        }
+        accountDivs.set(ta.igAccountId, list);
+      }
+    }
 
-      const tierImageUrlStr = tierImageUrls.join("; ");
-      const firstDiv = checkedDivs[0];
-      const tierCaption = renderCaption(postType.captionTemplate, {
-        divAbb: "",
-        divName: conf,
-        conf,
+    // One row per unique account ID with combined images
+    for (const [accountId, divs] of accountDivs) {
+      const imageUrls = divs.map((d) => divImageUrl(state, postType, d));
+      const imageUrlStr = imageUrls.join("; ");
+
+      const firstDiv = divs[0];
+      const caption = renderCaption(postType.captionTemplate, {
+        divAbb: divs.length === 1 ? firstDiv.abb : "",
+        divName: divs.length === 1 ? firstDiv.div : firstDiv.conf,
+        conf: firstDiv.conf,
         week: state.weekNumber,
         league: state.leagueName,
         type: postType.label,
       });
 
-      if (ta.fbAccountId) {
-        rows.push({
-          caption: tierCaption,
-          imageUrl: tierImageUrlStr,
-          postTime,
-          accountId: ta.fbAccountId,
-          firstComment: "",
-          tags: "",
-        });
-      }
-      if (ta.igAccountId) {
-        rows.push({
-          caption: tierCaption,
-          imageUrl: tierImageUrlStr,
-          postTime,
-          accountId: ta.igAccountId,
-          firstComment: "",
-          tags: "",
-        });
-      }
+      rows.push({
+        caption,
+        imageUrl: imageUrlStr,
+        postTime,
+        accountId,
+        firstComment: "",
+        tags: "",
+      });
     }
   }
 
