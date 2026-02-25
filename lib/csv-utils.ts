@@ -144,66 +144,32 @@ export function generateCsvRows(state: AppState): CsvRow[] {
       postType.defaultTime
     );
 
-    // Collect every (accountId → divisions[]) pair from both
-    // division-level and tier-level assignments.
-    const accountDivs = new Map<string, Division[]>();
+    // --- Division/location account rows (grouped by account ID) ---
+    const locationDivs = new Map<string, Division[]>();
 
     for (const div of checkedDivs) {
       if (div.fbAccountId) {
-        const list = accountDivs.get(div.fbAccountId) || [];
+        const list = locationDivs.get(div.fbAccountId) || [];
         list.push(div);
-        accountDivs.set(div.fbAccountId, list);
+        locationDivs.set(div.fbAccountId, list);
       }
       if (div.igAccountId) {
-        const list = accountDivs.get(div.igAccountId) || [];
+        const list = locationDivs.get(div.igAccountId) || [];
         list.push(div);
-        accountDivs.set(div.igAccountId, list);
+        locationDivs.set(div.igAccountId, list);
       }
     }
 
-    // Tier-level accounts: all checked divisions in that tier
-    const tierGroups = groupByTier(checkedDivs);
-    for (const [conf, tierDivisions] of tierGroups) {
-      const ta = state.tierAccounts[conf];
-      if (!ta) continue;
-      if (ta.fbAccountId) {
-        const list = accountDivs.get(ta.fbAccountId) || [];
-        for (const d of tierDivisions) {
-          if (!list.some((x) => x.abb === d.abb)) list.push(d);
-        }
-        accountDivs.set(ta.fbAccountId, list);
-      }
-      if (ta.igAccountId) {
-        const list = accountDivs.get(ta.igAccountId) || [];
-        for (const d of tierDivisions) {
-          if (!list.some((x) => x.abb === d.abb)) list.push(d);
-        }
-        accountDivs.set(ta.igAccountId, list);
-      }
-    }
-
-    // Build account ID → name lookup
-    const accountNameMap = new Map<string, string>();
-    for (const a of state.accounts) {
-      accountNameMap.set(a.id, a.name);
-    }
-
-    // One row per unique account ID with combined images
-    for (const [accountId, divs] of accountDivs) {
+    for (const [accountId, divs] of locationDivs) {
       const imageUrls = divs.map((d) => divImageUrl(state, postType, d));
       const imageUrlStr = imageUrls.join("; ");
-
       const firstDiv = divs[0];
-      const accountName = accountNameMap.get(accountId) || "";
-
-      const divName = firstDiv.div;
 
       const caption = renderCaption(postType.captionTemplate, {
         divAbb: divs.length === 1 ? firstDiv.abb : "",
-        divName,
+        divName: firstDiv.div,
         conf: firstDiv.conf,
         week: state.weekNumber,
-        league: state.leagueName,
         type: postType.label,
       });
 
@@ -215,6 +181,49 @@ export function generateCsvRows(state: AppState): CsvRow[] {
         firstComment: "",
         tags: "",
       });
+    }
+
+    // --- Tier account rows (one per tier, using tier caption) ---
+    const tierGroups = groupByTier(checkedDivs);
+    for (const [conf, tierDivisions] of tierGroups) {
+      const ta = state.tierAccounts[conf];
+      if (!ta || (!ta.fbAccountId && !ta.igAccountId)) continue;
+
+      const imageUrls = tierDivisions.map((d) =>
+        divImageUrl(state, postType, d)
+      );
+      const imageUrlStr = imageUrls.join("; ");
+
+      const template =
+        postType.tierCaptionTemplate || postType.captionTemplate;
+      const caption = renderCaption(template, {
+        divAbb: "",
+        divName: conf,
+        conf,
+        week: state.weekNumber,
+        type: postType.label,
+      });
+
+      if (ta.fbAccountId) {
+        rows.push({
+          caption,
+          imageUrl: imageUrlStr,
+          postTime,
+          accountId: ta.fbAccountId,
+          firstComment: "",
+          tags: "",
+        });
+      }
+      if (ta.igAccountId) {
+        rows.push({
+          caption,
+          imageUrl: imageUrlStr,
+          postTime,
+          accountId: ta.igAccountId,
+          firstComment: "",
+          tags: "",
+        });
+      }
     }
   }
 

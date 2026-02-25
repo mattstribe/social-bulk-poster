@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore } from "@/lib/store";
+import { renderCaption } from "@/lib/caption-template";
 import type { PostType } from "@/lib/types";
 
 interface Props {
@@ -8,7 +9,15 @@ interface Props {
 }
 
 export default function PostTypeCard({ postType }: Props) {
-  const { updatePostType, removePostType } = useStore();
+  const { state, updatePostType, removePostType } = useStore();
+
+  const sampleVars = {
+    divAbb: "BUF2",
+    divName: "Buffalo",
+    conf: "Tier 2",
+    week: state.weekNumber || 1,
+    type: postType.label,
+  };
 
   const update = (updates: Partial<PostType>) =>
     updatePostType(postType.id, updates);
@@ -62,9 +71,31 @@ export default function PostTypeCard({ postType }: Props) {
             placeholder="Week {week} {divName} {type} are here! #{league}"
             className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
           />
-          <p className="mt-0.5 text-xs text-zinc-400">
-            Variables: {"{divAbb}"} {"{divName}"} {"{conf}"} {"{week}"}{" "}
-            {"{league}"} {"{type}"}
+          <p className="mt-0.5 text-xs italic text-zinc-400">
+            Sample:{" "}
+            {postType.captionTemplate
+              ? renderCaption(postType.captionTemplate, sampleVars)
+              : "Enter a template above"}
+          </p>
+        </div>
+
+        {/* Tier Caption Template */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-zinc-500">
+            Tier Caption Template
+          </label>
+          <textarea
+            value={postType.tierCaptionTemplate}
+            onChange={(e) => update({ tierCaptionTemplate: e.target.value })}
+            rows={2}
+            placeholder="Week {week} {conf} {type} are here! #{league}"
+            className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
+          />
+          <p className="mt-0.5 text-xs italic text-zinc-400">
+            Sample:{" "}
+            {postType.tierCaptionTemplate
+              ? renderCaption(postType.tierCaptionTemplate, sampleVars)
+              : "Enter a template above"}
           </p>
         </div>
 

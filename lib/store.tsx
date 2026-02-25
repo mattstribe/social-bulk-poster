@@ -25,6 +25,7 @@ interface SavedSettings {
   accounts: SocialAccount[];
   divisions: Division[];
   tierAccounts: Record<string, TierAccount>;
+  postTypes: PostType[];
   leagueName: string;
 }
 
@@ -45,6 +46,7 @@ function settingsSnapshot(state: AppState): string {
     accounts: state.accounts,
     divisions: state.divisions,
     tierAccounts: state.tierAccounts,
+    postTypes: state.postTypes,
     leagueName: state.leagueName,
   };
   return JSON.stringify(s);
@@ -65,6 +67,7 @@ interface StoreContextValue {
   addDivision: (conf: string, div: string, abb: string) => void;
   removeDivision: (abb: string) => void;
   removeTierDivisions: (conf: string) => void;
+  moveTier: (conf: string, direction: "up" | "down") => void;
   updateDivisionAccount: (
     abb: string,
     field: "fbAccountId" | "igAccountId",
@@ -108,6 +111,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               accounts: saved.accounts || [],
               divisions: saved.divisions || [],
               tierAccounts: saved.tierAccounts || {},
+              postTypes: saved.postTypes?.length
+                ? saved.postTypes
+                : base.postTypes,
               leagueName: saved.leagueName || base.leagueName,
             };
           }
@@ -133,6 +139,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       } catch {
         // ignore corrupt localStorage
       }
+
+      base = {
+        ...base,
+        postTypes: base.postTypes.map((pt) => ({
+          ...pt,
+          tierCaptionTemplate:
+            pt.tierCaptionTemplate ??
+            (DEFAULT_POST_TYPES.find((d) => d.id === pt.id)
+              ?.tierCaptionTemplate || pt.captionTemplate),
+        })),
+      };
 
       setState(base);
       setSavedSnapshot(settingsSnapshot(base));
@@ -161,6 +178,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       accounts: state.accounts,
       divisions: state.divisions,
       tierAccounts: state.tierAccounts,
+      postTypes: state.postTypes,
       leagueName: state.leagueName,
     };
     setSaving(true);
@@ -249,6 +267,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }),
     []
   );
+  const moveTier = useCallback(
+    (conf: string, direction: "up" | "down") =>
+      setState((s) => {
+        const tierOrder: string[] = [];
+        for (const d of s.divisions) {
+          if (!tierOrder.includes(d.conf)) tierOrder.push(d.conf);
+        }
+        const idx = tierOrder.indexOf(conf);
+        if (idx === -1) return s;
+        const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= tierOrder.length) return s;
+        [tierOrder[idx], tierOrder[swapIdx]] = [
+          tierOrder[swapIdx],
+          tierOrder[idx],
+        ];
+        const reordered = tierOrder.flatMap((t) =>
+          s.divisions.filter((d) => d.conf === t)
+        );
+        return { ...s, divisions: reordered };
+      }),
+    []
+  );
   const updateDivisionAccount = useCallback(
     (abb: string, field: "fbAccountId" | "igAccountId", accountId: string) =>
       setState((s) => ({
@@ -300,6 +340,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             id: crypto.randomUUID(),
             label: "Custom",
             captionTemplate: "",
+            tierCaptionTemplate: "",
             defaultDate: "",
             defaultTime: "12:00",
             cdnFolder: "",
@@ -339,6 +380,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         addDivision,
         removeDivision,
         removeTierDivisions,
+        moveTier,
         updateDivisionAccount,
         updateTierAccount,
         setPostTypes,

@@ -3,7 +3,6 @@ export interface CaptionVars {
   divName: string;
   conf: string;
   week: number;
-  league: string;
   type: string;
 }
 
@@ -19,6 +18,5 @@ export function renderCaption(
     .replace(/\{divName\}/g, vars.divName)
     .replace(/\{conf\}/g, vars.conf)
     .replace(/\{week\}/g, String(vars.week))
-    .replace(/\{league\}/g, vars.league)
     .replace(/\{type\}/g, vars.type);
 }

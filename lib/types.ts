@@ -19,6 +19,7 @@ export interface PostType {
   id: string;
   label: string;
   captionTemplate: string;
+  tierCaptionTemplate: string;
   defaultDate: string;
   defaultTime: string;
   cdnFolder: string;
@@ -58,7 +59,9 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     id: "standings",
     label: "Standings",
     captionTemplate:
-      "Week {week} {divName} {type} are here! #{league} #BallHockey",
+      "Week {week} {divName} {type} are here! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} {conf} {type} are here! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Standings",
@@ -70,7 +73,9 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     id: "stats",
     label: "Stats",
     captionTemplate:
-      "Week {week} {divName} {type} update! #{league} #BallHockey",
+      "Week {week} {divName} {type} update! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} {conf} {type} update! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Stats",
@@ -82,7 +87,9 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     id: "final-scores",
     label: "Final Scores",
     captionTemplate:
-      "Week {week} Final Scores are in! #{league} #BallHockey",
+      "Week {week} Final Scores are in! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} Final Scores are in! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Final-Scores",
@@ -94,7 +101,9 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     id: "upcoming-games",
     label: "Upcoming Games",
     captionTemplate:
-      "Week {week} Schedule is out! #{league} #BallHockey",
+      "Week {week} Schedule is out! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} Schedule is out! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Upcoming-Games",

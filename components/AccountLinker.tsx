@@ -11,6 +11,7 @@ export default function AccountLinker() {
     addDivision,
     removeDivision,
     removeTierDivisions,
+    moveTier,
     updateDivisionAccount,
     updateTierAccount,
   } = useStore();
@@ -155,19 +156,44 @@ export default function AccountLinker() {
         </p>
       ) : (
         <div className="space-y-4">
-          {[...tierGroups.entries()].map(([conf, divs]) => {
-            const ta = state.tierAccounts[conf] || {
-              fbAccountId: "",
-              igAccountId: "",
-            };
+          {(() => {
+            const tierKeys = [...tierGroups.keys()];
+            return tierKeys.map((conf, tierIdx) => {
+              const divs = tierGroups.get(conf)!;
+              const ta = state.tierAccounts[conf] || {
+                fbAccountId: "",
+                igAccountId: "",
+              };
+              const isFirst = tierIdx === 0;
+              const isLast = tierIdx === tierKeys.length - 1;
 
-            return (
-              <div key={conf}>
-                {/* Tier header */}
-                <div className="mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-900/20">
-                  <h3 className="min-w-[80px] text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-200">
-                    {conf}
-                  </h3>
+              return (
+                <div key={conf}>
+                  {/* Tier header */}
+                  <div className="mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-900/20">
+                    <div className="flex items-center gap-1">
+                      <div className="flex flex-col">
+                        <button
+                          onClick={() => moveTier(conf, "up")}
+                          disabled={isFirst}
+                          className="text-xs leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
+                          title="Move up"
+                        >
+                          &#9650;
+                        </button>
+                        <button
+                          onClick={() => moveTier(conf, "down")}
+                          disabled={isLast}
+                          className="text-xs leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
+                          title="Move down"
+                        >
+                          &#9660;
+                        </button>
+                      </div>
+                      <h3 className="min-w-[80px] text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-200">
+                        {conf}
+                      </h3>
+                    </div>
                   <div className="flex flex-1 flex-wrap items-center gap-3">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-medium text-blue-600">
@@ -302,8 +328,9 @@ export default function AccountLinker() {
                   ))}
                 </div>
               </div>
-            );
-          })}
+              );
+            });
+          })()}
 
           <button
             onClick={() => setDivisions([])}
