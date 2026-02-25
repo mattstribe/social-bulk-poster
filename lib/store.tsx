@@ -26,12 +26,11 @@ interface SavedSettings {
   divisions: Division[];
   tierAccounts: Record<string, TierAccount>;
   leagueName: string;
-  cdnBaseUrl: string;
 }
 
 function getInitialState(): AppState {
   return {
-    leagueName: "",
+    leagueName: "NBHL",
     cdnBaseUrl: DEFAULT_CDN_BASE_URL,
     weekNumber: 1,
     accounts: [],
@@ -47,7 +46,6 @@ function settingsSnapshot(state: AppState): string {
     divisions: state.divisions,
     tierAccounts: state.tierAccounts,
     leagueName: state.leagueName,
-    cdnBaseUrl: state.cdnBaseUrl,
   };
   return JSON.stringify(s);
 }
@@ -106,7 +104,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               divisions: saved.divisions || [],
               tierAccounts: saved.tierAccounts || {},
               leagueName: saved.leagueName || "",
-              cdnBaseUrl: saved.cdnBaseUrl || DEFAULT_CDN_BASE_URL,
+              cdnBaseUrl: saved.cdnBaseUrl || base.cdnBaseUrl,
             };
           }
         }
@@ -160,7 +158,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       divisions: state.divisions,
       tierAccounts: state.tierAccounts,
       leagueName: state.leagueName,
-      cdnBaseUrl: state.cdnBaseUrl,
     };
     setSaving(true);
     try {

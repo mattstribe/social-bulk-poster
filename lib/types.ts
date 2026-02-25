@@ -51,8 +51,7 @@ export interface CsvRow {
   tags: string;
 }
 
-export const DEFAULT_CDN_BASE_URL =
-  "https://pub-3c06366d547445298c77e04b7c3c77ad.r2.dev";
+export const DEFAULT_CDN_BASE_URL = "";
 
 export const DEFAULT_POST_TYPES: PostType[] = [
   {

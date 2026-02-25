@@ -16,7 +16,7 @@ const s3 = new S3Client({
 export async function GET() {
   if (!CDN_BASE) {
     return NextResponse.json(
-      { accounts: [], divisions: [], tierAccounts: {} },
+      { accounts: [], divisions: [], tierAccounts: {}, cdnBaseUrl: "" },
       { status: 200 }
     );
   }
@@ -26,11 +26,12 @@ export async function GET() {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) throw new Error(`CDN returned ${res.status}`);
     const data = await res.json();
+    data.cdnBaseUrl = CDN_BASE;
     return NextResponse.json(data);
   } catch (err) {
     console.error("Failed to read settings from R2:", err);
     return NextResponse.json(
-      { accounts: [], divisions: [], tierAccounts: {} },
+      { accounts: [], divisions: [], tierAccounts: {}, cdnBaseUrl: CDN_BASE },
       { status: 200 }
     );
   }
