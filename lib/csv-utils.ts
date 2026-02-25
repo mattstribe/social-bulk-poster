@@ -182,15 +182,25 @@ export function generateCsvRows(state: AppState): CsvRow[] {
       }
     }
 
+    // Build account ID → name lookup
+    const accountNameMap = new Map<string, string>();
+    for (const a of state.accounts) {
+      accountNameMap.set(a.id, a.name);
+    }
+
     // One row per unique account ID with combined images
     for (const [accountId, divs] of accountDivs) {
       const imageUrls = divs.map((d) => divImageUrl(state, postType, d));
       const imageUrlStr = imageUrls.join("; ");
 
       const firstDiv = divs[0];
+      const accountName = accountNameMap.get(accountId) || "";
+
+      const divName = firstDiv.div;
+
       const caption = renderCaption(postType.captionTemplate, {
         divAbb: divs.length === 1 ? firstDiv.abb : "",
-        divName: divs.length === 1 ? firstDiv.div : firstDiv.conf,
+        divName,
         conf: firstDiv.conf,
         week: state.weekNumber,
         league: state.leagueName,
