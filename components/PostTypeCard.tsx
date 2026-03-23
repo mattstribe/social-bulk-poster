@@ -17,7 +17,7 @@ export default function PostTypeCard({ postType }: Props) {
     divAbb: "BUF2",
     divName: "Buffalo",
     conf: "Tier 2",
-    week: state.weekNumber || 1,
+    week: state.weekNumber ?? 1,
     type: postType.label,
   };
 

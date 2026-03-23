@@ -19,9 +19,9 @@ export default function ConfigHeader() {
           </label>
           <input
             type="number"
-            min={1}
+            min={0}
             value={state.weekNumber}
-            onChange={(e) => setWeekNumber(Number(e.target.value) || 1)}
+            onChange={(e) => setWeekNumber(Math.max(0, Number(e.target.value)))}
             className="w-20 rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-center text-sm font-bold focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
           />
         </div>
