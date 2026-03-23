@@ -66,8 +66,8 @@ interface StoreContextValue {
   state: AppState;
   hasUnsavedChanges: boolean;
   saving: boolean;
-  selectedDivisionAbb: string | null;
-  setSelectedDivisionAbb: (abb: string | null) => void;
+  selectedDivisionAbbs: string[];
+  setSelectedDivisionAbbs: (abbs: string[] | ((prev: string[]) => string[])) => void;
   savedDivisionsMap: Record<string, string[]>;
   cdnManifest: CdnManifest | null;
   cdnScanning: boolean;
@@ -206,8 +206,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     hydrated && hasData && settingsSnapshot(state) !== savedSnapshot;
 
   const [saving, setSaving] = useState(false);
-  const [selectedDivisionAbb, setSelectedDivisionAbb] = useState<string | null>(
-    null
+  const [selectedDivisionAbbs, setSelectedDivisionAbbs] = useState<string[]>(
+    []
   );
   const [savedDivisionsMap, setSavedDivisionsMap] = useState<
     Record<string, string[]>
@@ -435,23 +435,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const toggleDivisionOnAccount = useCallback(
     (accountId: string) => {
-      if (!selectedDivisionAbb) return;
+      if (selectedDivisionAbbs.length === 0) return;
       setState((s) => ({
         ...s,
         postingAccounts: s.postingAccounts.map((pa) => {
           if (pa.id !== accountId) return pa;
-          const has = pa.divisionAbbs.includes(selectedDivisionAbb);
-          return {
-            ...pa,
-            divisionAbbs: has
-              ? pa.divisionAbbs.filter((a) => a !== selectedDivisionAbb)
-              : [...pa.divisionAbbs, selectedDivisionAbb],
-          };
+          let divisionAbbs = [...pa.divisionAbbs];
+          for (const abb of selectedDivisionAbbs) {
+            const has = divisionAbbs.includes(abb);
+            divisionAbbs = has
+              ? divisionAbbs.filter((a) => a !== abb)
+              : [...divisionAbbs, abb];
+          }
+          return { ...pa, divisionAbbs };
         }),
       }));
-      setSelectedDivisionAbb(null);
+      setSelectedDivisionAbbs([]);
     },
-    [selectedDivisionAbb]
+    [selectedDivisionAbbs]
   );
 
   // --- Post type actions ---
@@ -509,8 +510,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         state,
         hasUnsavedChanges,
         saving,
-        selectedDivisionAbb,
-        setSelectedDivisionAbb,
+        selectedDivisionAbbs,
+        setSelectedDivisionAbbs,
         savedDivisionsMap,
         cdnManifest,
         cdnScanning,

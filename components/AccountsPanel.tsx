@@ -5,7 +5,22 @@ import { useStore } from "@/lib/store";
 import { parseAccountsCsv, parseDivisionsCsv } from "@/lib/csv-utils";
 
 export default function AccountsPanel() {
-  const { state, setAccounts, setDivisions, selectedDivisionAbb, setSelectedDivisionAbb } = useStore();
+  const {
+    state,
+    setAccounts,
+    setDivisions,
+    selectedDivisionAbbs,
+    setSelectedDivisionAbbs,
+  } = useStore();
+
+  const handleDivisionAbbClick = useCallback(
+    (abb: string) => {
+      setSelectedDivisionAbbs((prev) =>
+        prev.includes(abb) ? prev.filter((a) => a !== abb) : [...prev, abb]
+      );
+    },
+    [setSelectedDivisionAbbs]
+  );
 
   const handleAccountUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,20 +84,38 @@ export default function AccountsPanel() {
           </p>
         ) : (
           <>
-            {selectedDivisionAbb && (
+            {selectedDivisionAbbs.length > 0 && (
               <p className="mb-2 text-xs text-blue-600 dark:text-blue-400">
-                Click a posting account to assign/unassign <span className="font-mono font-semibold">{selectedDivisionAbb}</span>
+                Click a posting account to assign/unassign{" "}
+                {selectedDivisionAbbs.length === 1 ? (
+                  <span className="font-mono font-semibold">
+                    {selectedDivisionAbbs[0]}
+                  </span>
+                ) : (
+                  <>
+                    <span className="font-semibold">
+                      {selectedDivisionAbbs.length} divisions
+                    </span>
+                    :{" "}
+                    <span className="font-mono font-semibold">
+                      {selectedDivisionAbbs.join(", ")}
+                    </span>
+                  </>
+                )}
               </p>
             )}
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Click abbs to build your selection; click again to deselect. Then
+              click a posting account to assign or unassign them all at once.
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {state.divisions.map((d) => {
-                const isSelected = selectedDivisionAbb === d.abb;
+                const isSelected = selectedDivisionAbbs.includes(d.abb);
                 return (
                   <button
                     key={d.abb}
-                    onClick={() =>
-                      setSelectedDivisionAbb(isSelected ? null : d.abb)
-                    }
+                    type="button"
+                    onClick={() => handleDivisionAbbClick(d.abb)}
                     className={`rounded-full px-2.5 py-0.5 text-xs font-mono font-medium transition-all ${
                       isSelected
                         ? "bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-1 dark:ring-offset-zinc-900"
@@ -95,7 +128,11 @@ export default function AccountsPanel() {
               })}
             </div>
             <button
-              onClick={() => setDivisions([])}
+              type="button"
+              onClick={() => {
+                setDivisions([]);
+                setSelectedDivisionAbbs([]);
+              }}
               className="mt-3 text-xs text-red-500 hover:underline"
             >
               Clear divisions

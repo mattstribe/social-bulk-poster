@@ -6,7 +6,7 @@ import { useStore } from "@/lib/store";
 export default function PostingAccountsPanel() {
   const {
     state,
-    selectedDivisionAbb,
+    selectedDivisionAbbs,
     savedDivisionsMap,
     addPostingAccount,
     removePostingAccount,
@@ -54,7 +54,7 @@ export default function PostingAccountsPanel() {
               total={state.postingAccounts.length}
               fbAccounts={fbAccounts}
               igAccounts={igAccounts}
-              selectedDivisionAbb={selectedDivisionAbb}
+              selectedDivisionAbbs={selectedDivisionAbbs}
               savedAbbs={savedDivisionsMap[pa.id] ?? []}
               onUpdate={(updates) => updatePostingAccount(pa.id, updates)}
               onRemove={() => removePostingAccount(pa.id)}
@@ -86,7 +86,7 @@ interface CardProps {
   total: number;
   fbAccounts: import("@/lib/types").SocialAccount[];
   igAccounts: import("@/lib/types").SocialAccount[];
-  selectedDivisionAbb: string | null;
+  selectedDivisionAbbs: string[];
   savedAbbs: string[];
   onUpdate: (updates: Partial<import("@/lib/types").PostingAccount>) => void;
   onRemove: () => void;
@@ -101,7 +101,7 @@ function PostingAccountCard({
   total,
   fbAccounts,
   igAccounts,
-  selectedDivisionAbb,
+  selectedDivisionAbbs,
   savedAbbs,
   onUpdate,
   onRemove,
@@ -109,7 +109,7 @@ function PostingAccountCard({
   onToggleDivision,
   onUnassign,
 }: CardProps) {
-  const isAssigning = !!selectedDivisionAbb;
+  const isAssigning = selectedDivisionAbbs.length > 0;
 
   const removedAbbs = savedAbbs.filter(
     (abb) => !account.divisionAbbs.includes(abb)
