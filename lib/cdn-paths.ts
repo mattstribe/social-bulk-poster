@@ -52,3 +52,19 @@ export function fileMatchesFilenamePrefix(
 ): boolean {
   return filename.toLowerCase().startsWith(prefix.toLowerCase());
 }
+
+/**
+ * Built-in Stats uses a single file per division: `{divAbb}_Stats.png` (no _1, _2).
+ * Other types use prefix matching so numbered exports still work.
+ */
+export function fileMatchesPostTypePattern(
+  filename: string,
+  postTypeId: string,
+  resolvedPrefix: string
+): boolean {
+  if (postTypeId === "stats") {
+    const base = filename.replace(/\.(png|jpe?g|webp)$/i, "");
+    return base.toLowerCase() === resolvedPrefix.toLowerCase();
+  }
+  return fileMatchesFilenamePrefix(filename, resolvedPrefix);
+}

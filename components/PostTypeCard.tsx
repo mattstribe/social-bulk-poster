@@ -5,7 +5,7 @@ import { useStore } from "@/lib/store";
 import { renderCaption } from "@/lib/caption-template";
 import {
   resolveFilenamePattern,
-  fileMatchesFilenamePrefix,
+  fileMatchesPostTypePattern,
 } from "@/lib/cdn-paths";
 import type { PostType } from "@/lib/types";
 
@@ -42,10 +42,16 @@ export default function PostTypeCard({ postType }: Props) {
     let found = 0;
     for (const abb of uniqueAbbs) {
       const prefix = resolveFilenamePattern(postType.filenamePattern, abb);
-      if (files.some((f) => fileMatchesFilenamePrefix(f, prefix))) found++;
+      if (
+        files.some((f) =>
+          fileMatchesPostTypePattern(f, postType.id, prefix)
+        )
+      ) {
+        found++;
+      }
     }
-    return { found, total: uniqueAbbs.length };
-  }, [cdnManifest, postType.cdnFolder, postType.filenamePattern, uniqueAbbs]);
+    return { found };
+  }, [cdnManifest, postType.id, postType.cdnFolder, postType.filenamePattern, uniqueAbbs]);
 
   return (
     <div
@@ -175,20 +181,13 @@ export default function PostTypeCard({ postType }: Props) {
               placeholder="{divAbb}_Type.png or leave empty"
               className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-800"
             />
-            <p className="mt-0.5 text-xs text-zinc-400">
-              Prefix pattern matched against CDN files (e.g. matches _1.png, _2.png)
-            </p>
             {cdnCoverage && (
               <p
                 className={`mt-1 text-xs font-medium ${
-                  cdnCoverage.found === cdnCoverage.total
-                    ? "text-green-600"
-                    : cdnCoverage.found > 0
-                      ? "text-amber-600"
-                      : "text-red-500"
+                  cdnCoverage.found > 0 ? "text-green-600" : "text-red-500"
                 }`}
               >
-                {cdnCoverage.found}/{cdnCoverage.total} divisions have files
+                {cdnCoverage.found} divisions have files
               </p>
             )}
           </div>

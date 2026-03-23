@@ -2,39 +2,42 @@
 
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
-import {
-  resolveFilenamePattern,
-  fileMatchesFilenamePrefix,
-} from "@/lib/cdn-paths";
-import type { CdnManifest } from "@/lib/types";
+import { countImagesForDivision } from "@/lib/csv-utils";
+import type { CdnManifest, PostingAccount, PostType } from "@/lib/types";
 
-type DivAvailability = "full" | "partial" | "none" | "unknown";
+type DivisionPreview = { abb: string; count: number };
 
-function getDivAvailability(
-  abb: string,
-  enabledPatterned: { cdnFolder: string; filenamePattern: string }[],
+function buildPreview(
+  accounts: PostingAccount[],
+  enabledPatterned: Pick<
+    PostType,
+    "id" | "cdnFolder" | "filenamePattern"
+  >[],
   manifest: CdnManifest | null
-): DivAvailability {
-  if (!manifest || enabledPatterned.length === 0) return "unknown";
-  let matched = 0;
-  for (const pt of enabledPatterned) {
-    const prefix = resolveFilenamePattern(pt.filenamePattern, abb);
-    const files = manifest[pt.cdnFolder] ?? [];
-    if (files.some((f) => fileMatchesFilenamePrefix(f, prefix))) matched++;
+): { account: PostingAccount; divisions: DivisionPreview[] }[] {
+  if (!manifest || enabledPatterned.length === 0) return [];
+
+  const out: { account: PostingAccount; divisions: DivisionPreview[] }[] = [];
+
+  for (const pa of accounts) {
+    if (!pa.fbAccountId && !pa.igAccountId) continue;
+
+    const divisions: DivisionPreview[] = [];
+    for (const abb of pa.divisionAbbs) {
+      const count = countImagesForDivision(abb, manifest, enabledPatterned);
+      if (count > 0) divisions.push({ abb, count });
+    }
+
+    if (divisions.length > 0) {
+      out.push({ account: pa, divisions });
+    }
   }
-  if (matched === enabledPatterned.length) return "full";
-  if (matched > 0) return "partial";
-  return "none";
+
+  return out;
 }
 
 export default function AccountSelector() {
-  const {
-    state,
-    cdnManifest,
-    togglePostingAccount,
-    toggleAllPostingAccounts,
-    toggleDivisionAbb,
-  } = useStore();
+  const { state, cdnManifest } = useStore();
 
   const enabledPatterned = useMemo(
     () =>
@@ -44,71 +47,65 @@ export default function AccountSelector() {
     [state.postTypes]
   );
 
-  const locationAccounts = state.postingAccounts.filter(
-    (pa) => pa.type === "location"
-  );
-  const tierAccounts = state.postingAccounts.filter(
-    (pa) => pa.type === "tier"
+  const locationPreview = useMemo(
+    () =>
+      buildPreview(
+        state.postingAccounts.filter((pa) => pa.type === "location"),
+        enabledPatterned,
+        cdnManifest
+      ),
+    [state.postingAccounts, enabledPatterned, cdnManifest]
   );
 
-  const allChecked =
-    state.postingAccounts.length > 0 &&
-    state.postingAccounts.every((pa) => pa.checked);
-  const noneChecked = state.postingAccounts.every((pa) => !pa.checked);
+  const tierPreview = useMemo(
+    () =>
+      buildPreview(
+        state.postingAccounts.filter((pa) => pa.type === "tier"),
+        enabledPatterned,
+        cdnManifest
+      ),
+    [state.postingAccounts, enabledPatterned, cdnManifest]
+  );
+
+  const hasPreview =
+    locationPreview.length > 0 || tierPreview.length > 0;
 
   return (
     <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="mb-4 flex shrink-0 items-center justify-between">
-        <h2 className="text-lg font-semibold">Accounts</h2>
-        {state.postingAccounts.length > 0 && (
-          <div className="flex gap-2 text-xs">
-            <button
-              onClick={() => toggleAllPostingAccounts(true)}
-              disabled={allChecked}
-              className="text-blue-600 hover:underline disabled:opacity-40"
-            >
-              Select All
-            </button>
-            <span className="text-zinc-300">/</span>
-            <button
-              onClick={() => toggleAllPostingAccounts(false)}
-              disabled={noneChecked}
-              className="text-blue-600 hover:underline disabled:opacity-40"
-            >
-              None
-            </button>
-          </div>
-        )}
+      <div className="mb-2 shrink-0">
+        <h2 className="text-lg font-semibold">Posts this week</h2>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Accounts and divisions that have images on the CDN for your enabled
+          post types. The CSV includes only these (no manual selection).
+        </p>
       </div>
 
       {state.postingAccounts.length === 0 ? (
         <p className="text-sm text-zinc-500">
           Set up posting accounts on the Setup page first.
         </p>
+      ) : !cdnManifest ? (
+        <p className="text-sm text-zinc-500">
+          Use <span className="font-medium">Scan CDN</span> in the header to
+          load files, then this list shows where posts will go.
+        </p>
+      ) : enabledPatterned.length === 0 ? (
+        <p className="text-sm text-zinc-500">
+          Enable at least one post type with a filename pattern to see matches.
+        </p>
+      ) : !hasPreview ? (
+        <p className="text-sm text-zinc-500">
+          No matching images for enabled post types on the CDN for your linked
+          accounts. Check week, league, and division assignments on Setup.
+        </p>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="space-y-4">
-            {locationAccounts.length > 0 && (
-              <AccountGroup
-                label="Location"
-                color="blue"
-                accounts={locationAccounts}
-                manifest={cdnManifest}
-                enabledPatterned={enabledPatterned}
-                onToggleAccount={togglePostingAccount}
-                onToggleDivision={toggleDivisionAbb}
-              />
+            {locationPreview.length > 0 && (
+              <PreviewGroup label="Location" color="blue" entries={locationPreview} />
             )}
-            {tierAccounts.length > 0 && (
-              <AccountGroup
-                label="Tier"
-                color="purple"
-                accounts={tierAccounts}
-                manifest={cdnManifest}
-                enabledPatterned={enabledPatterned}
-                onToggleAccount={togglePostingAccount}
-                onToggleDivision={toggleDivisionAbb}
-              />
+            {tierPreview.length > 0 && (
+              <PreviewGroup label="Tier" color="purple" entries={tierPreview} />
             )}
           </div>
         </div>
@@ -117,34 +114,17 @@ export default function AccountSelector() {
   );
 }
 
-const DOT_CLASSES: Record<DivAvailability, string> = {
-  full: "bg-green-500",
-  partial: "bg-amber-400",
-  none: "bg-red-400",
-  unknown: "",
-};
-
-function AccountGroup({
+function PreviewGroup({
   label,
   color,
-  accounts,
-  manifest,
-  enabledPatterned,
-  onToggleAccount,
-  onToggleDivision,
+  entries,
 }: {
   label: string;
   color: "blue" | "purple";
-  accounts: import("@/lib/types").PostingAccount[];
-  manifest: CdnManifest | null;
-  enabledPatterned: { cdnFolder: string; filenamePattern: string }[];
-  onToggleAccount: (id: string) => void;
-  onToggleDivision: (accountId: string, abb: string) => void;
+  entries: { account: PostingAccount; divisions: DivisionPreview[] }[];
 }) {
   const colorClass =
     color === "blue" ? "text-blue-600" : "text-purple-600";
-  const accentClass =
-    color === "blue" ? "accent-blue-600" : "accent-purple-600";
 
   return (
     <div>
@@ -153,81 +133,27 @@ function AccountGroup({
       >
         {label}
       </h3>
-      <div className="space-y-0.5">
-        {accounts.map((pa) => {
-          const activeCount =
-            pa.divisionAbbs.length -
-            pa.disabledDivisionAbbs.filter((a) =>
-              pa.divisionAbbs.includes(a)
-            ).length;
-          const isIndeterminate =
-            activeCount > 0 && activeCount < pa.divisionAbbs.length;
-
-          return (
-            <div key={pa.id}>
-              <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800">
-                <input
-                  type="checkbox"
-                  checked={pa.checked}
-                  ref={(el) => {
-                    if (el) el.indeterminate = isIndeterminate;
-                  }}
-                  onChange={() => onToggleAccount(pa.id)}
-                  className={accentClass}
-                />
-                <span className="text-sm font-medium">
-                  {pa.name || "(unnamed)"}
-                </span>
-                <span className="text-xs text-zinc-400">
-                  {activeCount}/{pa.divisionAbbs.length}
-                </span>
-              </label>
-
-              {pa.divisionAbbs.length > 0 && (
-                <div className="ml-6 space-y-0.5">
-                  {pa.divisionAbbs.map((abb) => {
-                    const isActive =
-                      !pa.disabledDivisionAbbs.includes(abb);
-                    const avail = getDivAvailability(
-                      abb,
-                      enabledPatterned,
-                      manifest
-                    );
-                    const dotClass = DOT_CLASSES[avail];
-                    return (
-                      <label
-                        key={abb}
-                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isActive}
-                          onChange={() => onToggleDivision(pa.id, abb)}
-                          className="accent-zinc-500"
-                        />
-                        <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
-                          {abb}
-                        </span>
-                        {dotClass && (
-                          <span
-                            className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass}`}
-                            title={
-                              avail === "full"
-                                ? "All post type files found"
-                                : avail === "partial"
-                                  ? "Some post type files missing"
-                                  : "No files found on CDN"
-                            }
-                          />
-                        )}
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+      <div className="space-y-3">
+        {entries.map(({ account, divisions }) => (
+          <div key={account.id}>
+            <div className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+              {account.name || "(unnamed)"}
             </div>
-          );
-        })}
+            <ul className="ml-3 mt-1 space-y-0.5 border-l border-zinc-200 pl-3 dark:border-zinc-600">
+              {divisions.map(({ abb, count }) => (
+                <li
+                  key={abb}
+                  className="font-mono text-xs text-zinc-600 dark:text-zinc-400"
+                >
+                  {abb}{" "}
+                  <span className="text-zinc-400 dark:text-zinc-500">
+                    ({count})
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     </div>
   );

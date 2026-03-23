@@ -32,16 +32,17 @@ export default function GeneratePanel() {
     URL.revokeObjectURL(url);
   }, [rows, state.leagueName, state.weekNumber]);
 
-  const hasCheckedAccounts = state.postingAccounts.some((pa) => pa.checked);
   const hasLinkedAccounts = state.postingAccounts.some(
-    (pa) => pa.checked && (pa.fbAccountId || pa.igAccountId)
+    (pa) => pa.fbAccountId || pa.igAccountId
+  );
+  const hasEnabledPatternTypes = state.postTypes.some(
+    (pt) => pt.enabled && pt.filenamePattern.trim() !== ""
   );
 
   const canGenerate =
     state.leagueName.trim() !== "" &&
     hasLinkedAccounts &&
-    hasCheckedAccounts &&
-    state.postTypes.some((pt) => pt.enabled);
+    hasEnabledPatternTypes;
 
   const totalFiles = cdnManifest
     ? Object.values(cdnManifest).reduce((sum, arr) => sum + arr.length, 0)
@@ -80,15 +81,15 @@ export default function GeneratePanel() {
 
       {!canGenerate && (
         <p className="text-sm text-zinc-500">
-          Create posting accounts with linked social IDs on the Setup page,
-          select them above, and enable at least one post type.
+          Set league name, link FB or IG on posting accounts (Setup), and enable
+          at least one post type with a filename pattern.
         </p>
       )}
 
-      {generated && rows.length === 0 && (
+      {generated && rows.length === 0 && canGenerate && (
         <p className="text-sm text-amber-600">
-          No rows generated. Make sure selected accounts have linked social IDs,
-          assigned divisions, and at least one post type is enabled.
+          No rows generated. Scan CDN after export, ensure divisions are in your
+          divisions CSV, and that files exist for enabled post types on R2.
         </p>
       )}
 

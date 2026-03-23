@@ -167,6 +167,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Stats",
+    /** Exactly `{divAbb}_Stats.png` — no numbered suffixes (_1, _2). */
     filenamePattern: "{divAbb}_Stats",
     enabled: true,
     isBuiltIn: true,

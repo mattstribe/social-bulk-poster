@@ -10,7 +10,7 @@ import type {
 import {
   buildCdnUrl,
   resolveFilenamePattern,
-  fileMatchesFilenamePrefix,
+  fileMatchesPostTypePattern,
 } from "./cdn-paths";
 import { renderCaption } from "./caption-template";
 
@@ -68,10 +68,50 @@ export function parseDivisionsCsv(csvText: string): Division[] {
 
 /**
  * Build image URLs for a division + post type combo.
- * When a CDN manifest is provided, finds all files matching the resolved
- * prefix (e.g. "BUF_Standings" matches "BUF_Standings_1.png", "BUF_Standings_2.png").
- * Falls back to a single best-guess URL when no manifest is available.
+ * Uses manifest file lists; Stats matches `{divAbb}_Stats.png` only (no _1/_2).
+ * Other types use prefix matching (e.g. Standings → _1.png, _2.png).
+ * Falls back to a best-guess URL when no manifest is available.
  */
+/**
+ * Total image files for a division abbreviation across enabled post types
+ * (each matching file in each type folder counts toward the total).
+ */
+export function countImagesForDivision(
+  abb: string,
+  manifest: CdnManifest | null,
+  enabledPatternedTypes: Pick<
+    PostType,
+    "id" | "cdnFolder" | "filenamePattern"
+  >[]
+): number {
+  if (!manifest) return 0;
+  let n = 0;
+  for (const pt of enabledPatternedTypes) {
+    const pattern = pt.filenamePattern.trim();
+    if (!pattern) continue;
+    const prefix = resolveFilenamePattern(pattern, abb);
+    const files = manifest[pt.cdnFolder] ?? [];
+    n += files.filter((f) =>
+      fileMatchesPostTypePattern(f, pt.id, prefix)
+    ).length;
+  }
+  return n;
+}
+
+function divisionHasFilesForPostType(
+  postType: PostType,
+  div: Division,
+  manifest: CdnManifest | null
+): boolean {
+  const pattern = postType.filenamePattern.trim();
+  if (!pattern || !manifest) return false;
+  const prefix = resolveFilenamePattern(pattern, div.abb);
+  const files = manifest[postType.cdnFolder] ?? [];
+  return files.some((f) =>
+    fileMatchesPostTypePattern(f, postType.id, prefix)
+  );
+}
+
 function divImageUrls(
   state: AppState,
   postType: PostType,
@@ -96,7 +136,7 @@ function divImageUrls(
 
   if (manifest && manifest[folder]) {
     const matches = manifest[folder]
-      .filter((f) => fileMatchesFilenamePrefix(f, prefix))
+      .filter((f) => fileMatchesPostTypePattern(f, postType.id, prefix))
       .sort();
 
     if (matches.length) {
@@ -112,13 +152,16 @@ function divImageUrls(
     }
   }
 
+  const fallbackFile =
+    postType.id === "stats" ? `${prefix}.png` : `${prefix}_1.png`;
+
   return [
     buildCdnUrl(
       state.cdnBaseUrl,
       state.leagueName,
       state.weekNumber,
       folder,
-      `${prefix}_1.png`
+      fallbackFile
     ),
   ];
 }
@@ -126,19 +169,25 @@ function divImageUrls(
 /**
  * Generate SocialPilot-compatible CSV rows from the current app state.
  *
- * Iterates checked posting accounts. For each account, gathers the assigned
- * divisions, builds combined image URLs, and picks the caption template
- * based on account type (location vs tier).
+ * Includes posting accounts that have FB or IG linked. For each enabled
+ * post type with a filename pattern, only divisions that have matching
+ * files on the CDN (per manifest) are included—no manual account/division
+ * checkboxes. Rows are skipped when the manifest has no matches for that
+ * account/post type combo.
  */
 export function generateCsvRows(
   state: AppState,
   manifest: CdnManifest | null = null
 ): CsvRow[] {
   const rows: CsvRow[] = [];
-  const enabledTypes = state.postTypes.filter((pt) => pt.enabled);
-  const checkedAccounts = state.postingAccounts.filter((pa) => pa.checked);
+  const enabledTypes = state.postTypes.filter(
+    (pt) => pt.enabled && pt.filenamePattern.trim() !== ""
+  );
+  const linkedAccounts = state.postingAccounts.filter(
+    (pa) => pa.fbAccountId || pa.igAccountId
+  );
 
-  if (!checkedAccounts.length) return rows;
+  if (!linkedAccounts.length || !enabledTypes.length) return rows;
 
   const divMap = new Map<string, Division>();
   for (const d of state.divisions) {
@@ -151,20 +200,20 @@ export function generateCsvRows(
       postType.defaultTime
     );
 
-    for (const account of checkedAccounts) {
-      if (!account.fbAccountId && !account.igAccountId) continue;
+    for (const account of linkedAccounts) {
       if (!account.divisionAbbs.length) continue;
 
-      const activeAbbs = account.divisionAbbs.filter(
-        (abb) => !account.disabledDivisionAbbs?.includes(abb)
-      );
-      const divs = activeAbbs
+      const divs = account.divisionAbbs
         .map((abb) => divMap.get(abb))
         .filter((d): d is Division => !!d);
 
-      if (!divs.length) continue;
+      const divsWithFiles = divs.filter((d) =>
+        divisionHasFilesForPostType(postType, d, manifest)
+      );
 
-      const allUrls = divs.flatMap((d) =>
+      if (!divsWithFiles.length) continue;
+
+      const allUrls = divsWithFiles.flatMap((d) =>
         divImageUrls(state, postType, d, manifest)
       );
       const imageUrlStr = allUrls.join("; ");
@@ -174,9 +223,9 @@ export function generateCsvRows(
           ? postType.tierCaptionTemplate || postType.captionTemplate
           : postType.captionTemplate;
 
-      const firstDiv = divs[0];
+      const firstDiv = divsWithFiles[0];
       const caption = renderCaption(template, {
-        divAbb: divs.length === 1 ? firstDiv.abb : "",
+        divAbb: divsWithFiles.length === 1 ? firstDiv.abb : "",
         divName: account.name,
         conf: account.name,
         week: state.weekNumber,
