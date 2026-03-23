@@ -2,17 +2,17 @@
 
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { countImagesForDivision } from "@/lib/csv-utils";
+import { divisionImageBreakdown } from "@/lib/csv-utils";
 import type { CdnManifest, PostingAccount, PostType } from "@/lib/types";
 
-type DivisionPreview = { abb: string; count: number };
+type DivisionPreview = {
+  abb: string;
+  breakdown: { postTypeId: string; label: string; count: number }[];
+};
 
 function buildPreview(
   accounts: PostingAccount[],
-  enabledPatterned: Pick<
-    PostType,
-    "id" | "cdnFolder" | "filenamePattern"
-  >[],
+  enabledPatterned: PostType[],
   manifest: CdnManifest | null
 ): { account: PostingAccount; divisions: DivisionPreview[] }[] {
   if (!manifest || enabledPatterned.length === 0) return [];
@@ -24,8 +24,8 @@ function buildPreview(
 
     const divisions: DivisionPreview[] = [];
     for (const abb of pa.divisionAbbs) {
-      const count = countImagesForDivision(abb, manifest, enabledPatterned);
-      if (count > 0) divisions.push({ abb, count });
+      const breakdown = divisionImageBreakdown(abb, manifest, enabledPatterned);
+      if (breakdown.length > 0) divisions.push({ abb, breakdown });
     }
 
     if (divisions.length > 0) {
@@ -71,7 +71,7 @@ export default function AccountSelector() {
     locationPreview.length > 0 || tierPreview.length > 0;
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <section className="flex h-full min-h-0 flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <div className="mb-2 shrink-0">
         <h2 className="text-lg font-semibold">Posts this week</h2>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -102,10 +102,18 @@ export default function AccountSelector() {
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="space-y-4">
             {locationPreview.length > 0 && (
-              <PreviewGroup label="Location" color="blue" entries={locationPreview} />
+              <PreviewGroup
+                label="Location Accounts"
+                color="blue"
+                entries={locationPreview}
+              />
             )}
             {tierPreview.length > 0 && (
-              <PreviewGroup label="Tier" color="purple" entries={tierPreview} />
+              <PreviewGroup
+                label="Tier Accounts"
+                color="purple"
+                entries={tierPreview}
+              />
             )}
           </div>
         </div>
@@ -140,14 +148,18 @@ function PreviewGroup({
               {account.name || "(unnamed)"}
             </div>
             <ul className="ml-3 mt-1 space-y-0.5 border-l border-zinc-200 pl-3 dark:border-zinc-600">
-              {divisions.map(({ abb, count }) => (
+              {divisions.map(({ abb, breakdown }) => (
                 <li
                   key={abb}
                   className="font-mono text-xs text-zinc-600 dark:text-zinc-400"
                 >
                   {abb}{" "}
                   <span className="text-zinc-400 dark:text-zinc-500">
-                    ({count})
+                    {breakdown.map((b) => (
+                      <span key={b.postTypeId} className="whitespace-nowrap">
+                        ({b.count} {b.label}){" "}
+                      </span>
+                    ))}
                   </span>
                 </li>
               ))}

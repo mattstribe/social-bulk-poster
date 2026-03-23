@@ -7,7 +7,7 @@ export default function PostTypesPanel() {
   const { state, addPostType } = useStore();
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <section className="flex h-full min-h-0 flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Post Types</h2>
         <button

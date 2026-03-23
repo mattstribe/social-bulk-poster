@@ -76,26 +76,63 @@ export function parseDivisionsCsv(csvText: string): Division[] {
  * Total image files for a division abbreviation across enabled post types
  * (each matching file in each type folder counts toward the total).
  */
-export function countImagesForDivision(
+/** Short label for the weekly accounts preview (UG / FS / Stats / Standings / custom label). */
+export function getPostTypePreviewLabel(
+  pt: Pick<PostType, "id" | "label">
+): string {
+  switch (pt.id) {
+    case "upcoming-games":
+      return "UG";
+    case "final-scores":
+      return "FS";
+    case "stats":
+      return "Stats";
+    case "standings":
+      return "Standings";
+    default:
+      return pt.label.trim() || "Custom";
+  }
+}
+
+/**
+ * Per enabled post type, how many CDN files match this division (counts > 0 only).
+ * Only include types that are enabled with a filename pattern (CSV-eligible).
+ */
+export function divisionImageBreakdown(
   abb: string,
   manifest: CdnManifest | null,
-  enabledPatternedTypes: Pick<
-    PostType,
-    "id" | "cdnFolder" | "filenamePattern"
-  >[]
-): number {
-  if (!manifest) return 0;
-  let n = 0;
+  enabledPatternedTypes: PostType[]
+): { postTypeId: string; label: string; count: number }[] {
+  if (!manifest) return [];
+  const out: { postTypeId: string; label: string; count: number }[] = [];
   for (const pt of enabledPatternedTypes) {
     const pattern = pt.filenamePattern.trim();
     if (!pattern) continue;
     const prefix = resolveFilenamePattern(pattern, abb);
     const files = manifest[pt.cdnFolder] ?? [];
-    n += files.filter((f) =>
+    const count = files.filter((f) =>
       fileMatchesPostTypePattern(f, pt.id, prefix)
     ).length;
+    if (count > 0) {
+      out.push({
+        postTypeId: pt.id,
+        label: getPostTypePreviewLabel(pt),
+        count,
+      });
+    }
   }
-  return n;
+  return out;
+}
+
+export function countImagesForDivision(
+  abb: string,
+  manifest: CdnManifest | null,
+  enabledPatternedTypes: PostType[]
+): number {
+  return divisionImageBreakdown(abb, manifest, enabledPatternedTypes).reduce(
+    (sum, x) => sum + x.count,
+    0
+  );
 }
 
 function divisionHasFilesForPostType(
