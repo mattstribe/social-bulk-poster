@@ -114,34 +114,6 @@ export function mergeBuiltInPostTypeDefaults(postTypes: PostType[]): PostType[] 
 
 export const DEFAULT_POST_TYPES: PostType[] = [
   {
-    id: "standings",
-    label: "Standings",
-    captionTemplate:
-      "Week {week} {divName} {type} are here! #NBHL #BallHockey",
-    tierCaptionTemplate:
-      "Week {week} {conf} {type} are here! #NBHL #BallHockey",
-    defaultDate: "",
-    defaultTime: "12:00",
-    cdnFolder: "Standings",
-    filenamePattern: "{divAbb}_Standings",
-    enabled: true,
-    isBuiltIn: true,
-  },
-  {
-    id: "stats",
-    label: "Stats",
-    captionTemplate:
-      "Week {week} {divName} {type} update! #NBHL #BallHockey",
-    tierCaptionTemplate:
-      "Week {week} {conf} {type} update! #NBHL #BallHockey",
-    defaultDate: "",
-    defaultTime: "12:00",
-    cdnFolder: "Stats",
-    filenamePattern: "{divAbb}_Stats",
-    enabled: true,
-    isBuiltIn: true,
-  },
-  {
     id: "final-scores",
     label: "Final Scores",
     captionTemplate:
@@ -171,4 +143,43 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     enabled: true,
     isBuiltIn: true,
   },
+  {
+    id: "standings",
+    label: "Standings",
+    captionTemplate:
+      "Week {week} {divName} {type} are here! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} {conf} {type} are here! #NBHL #BallHockey",
+    defaultDate: "",
+    defaultTime: "12:00",
+    cdnFolder: "Standings",
+    filenamePattern: "{divAbb}_Standings",
+    enabled: true,
+    isBuiltIn: true,
+  },
+  {
+    id: "stats",
+    label: "Stats",
+    captionTemplate:
+      "Week {week} {divName} {type} update! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} {conf} {type} update! #NBHL #BallHockey",
+    defaultDate: "",
+    defaultTime: "12:00",
+    cdnFolder: "Stats",
+    filenamePattern: "{divAbb}_Stats",
+    enabled: true,
+    isBuiltIn: true,
+  },
 ];
+
+/** Built-ins first (in default order), then any custom post types. */
+export function reorderPostTypesLikeDefaults(postTypes: PostType[]): PostType[] {
+  const defaultIds = DEFAULT_POST_TYPES.map((d) => d.id);
+  const defaultIdSet = new Set(defaultIds);
+  const orderedBuiltIns = defaultIds
+    .map((id) => postTypes.find((pt) => pt.id === id))
+    .filter((pt): pt is PostType => !!pt);
+  const custom = postTypes.filter((pt) => !defaultIdSet.has(pt.id));
+  return [...orderedBuiltIns, ...custom];
+}

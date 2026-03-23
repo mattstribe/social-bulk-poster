@@ -20,6 +20,7 @@ import {
   DEFAULT_POST_TYPES,
   DEFAULT_POSTING_ACCOUNTS,
   mergeBuiltInPostTypeDefaults,
+  reorderPostTypesLikeDefaults,
 } from "./types";
 
 const STORAGE_KEY = "social-bulk-poster-state";
@@ -174,14 +175,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       base = {
         ...base,
-        postTypes: mergeBuiltInPostTypeDefaults(
-          base.postTypes.map((pt) => ({
-            ...pt,
-            tierCaptionTemplate:
-              pt.tierCaptionTemplate ??
-              (DEFAULT_POST_TYPES.find((d) => d.id === pt.id)
-                ?.tierCaptionTemplate || pt.captionTemplate),
-          }))
+        postTypes: reorderPostTypesLikeDefaults(
+          mergeBuiltInPostTypeDefaults(
+            base.postTypes.map((pt) => ({
+              ...pt,
+              tierCaptionTemplate:
+                pt.tierCaptionTemplate ??
+                (DEFAULT_POST_TYPES.find((d) => d.id === pt.id)
+                  ?.tierCaptionTemplate || pt.captionTemplate),
+            }))
+          )
         ),
       };
 
