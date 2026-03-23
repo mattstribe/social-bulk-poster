@@ -266,6 +266,7 @@ export function generateCsvRows(
         divName: account.name,
         conf: account.name,
         week: state.weekNumber,
+        upcomingWeek: state.weekNumber + 1,
         type: postType.label,
       });
 

@@ -16,11 +16,13 @@ interface Props {
 export default function PostTypeCard({ postType }: Props) {
   const { state, cdnManifest, updatePostType, removePostType } = useStore();
 
+  const w = state.weekNumber ?? 1;
   const sampleVars = {
     divAbb: "BUF2",
     divName: "Buffalo",
     conf: "Tier 2",
-    week: state.weekNumber ?? 1,
+    week: w,
+    upcomingWeek: w + 1,
     type: postType.label,
   };
 

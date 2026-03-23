@@ -132,9 +132,9 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     id: "upcoming-games",
     label: "Upcoming Games",
     captionTemplate:
-      "Week {week} Schedule is out! #NBHL #BallHockey",
+      "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
     tierCaptionTemplate:
-      "Week {week} Schedule is out! #NBHL #BallHockey",
+      "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Upcoming-Games",
