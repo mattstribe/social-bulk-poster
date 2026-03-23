@@ -7,15 +7,16 @@ import type { CsvRow } from "@/lib/types";
 import CsvPreview from "./CsvPreview";
 
 export default function GeneratePanel() {
-  const { state } = useStore();
+  const { state, cdnManifest, cdnScanning, scanCdn } = useStore();
   const [rows, setRows] = useState<CsvRow[]>([]);
   const [generated, setGenerated] = useState(false);
 
-  const handleGenerate = useCallback(() => {
-    const result = generateCsvRows(state);
+  const handleGenerate = useCallback(async () => {
+    const manifest = await scanCdn();
+    const result = generateCsvRows(state, manifest);
     setRows(result);
     setGenerated(true);
-  }, [state]);
+  }, [state, scanCdn]);
 
   const handleDownload = useCallback(() => {
     if (!rows.length) return;
@@ -42,17 +43,29 @@ export default function GeneratePanel() {
     hasCheckedAccounts &&
     state.postTypes.some((pt) => pt.enabled);
 
+  const totalFiles = cdnManifest
+    ? Object.values(cdnManifest).reduce((sum, arr) => sum + arr.length, 0)
+    : 0;
+  const folderCount = cdnManifest ? Object.keys(cdnManifest).length : 0;
+
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Generate CSV</h2>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => scanCdn()}
+            disabled={cdnScanning}
+            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          >
+            {cdnScanning ? "Scanning..." : "Scan CDN"}
+          </button>
           <button
             onClick={handleGenerate}
-            disabled={!canGenerate}
+            disabled={!canGenerate || cdnScanning}
             className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Generate Preview
+            {cdnScanning ? "Scanning..." : "Generate Preview"}
           </button>
           {rows.length > 0 && (
             <button
@@ -64,6 +77,13 @@ export default function GeneratePanel() {
           )}
         </div>
       </div>
+
+      {cdnManifest && (
+        <p className="mb-3 text-sm text-zinc-500">
+          CDN: {totalFiles} file{totalFiles !== 1 ? "s" : ""} found across{" "}
+          {folderCount} folder{folderCount !== 1 ? "s" : ""}
+        </p>
+      )}
 
       {!canGenerate && (
         <p className="text-sm text-zinc-500">

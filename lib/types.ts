@@ -55,6 +55,9 @@ export interface CsvRow {
   tags: string;
 }
 
+/** Folder name → array of filenames found in that folder on the CDN. */
+export type CdnManifest = Record<string, string[]>;
+
 export const DEFAULT_CDN_BASE_URL = "";
 
 export const DEFAULT_POSTING_ACCOUNTS: PostingAccount[] = [
@@ -104,7 +107,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Standings",
-    filenamePattern: "{divAbb}_Standings_1.png",
+    filenamePattern: "{divAbb}_Standings",
     enabled: true,
     isBuiltIn: true,
   },
@@ -118,7 +121,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Stats",
-    filenamePattern: "{divAbb}_Stats.png",
+    filenamePattern: "{divAbb}_Stats",
     enabled: true,
     isBuiltIn: true,
   },

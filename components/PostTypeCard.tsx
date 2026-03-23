@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { renderCaption } from "@/lib/caption-template";
+import { resolveFilenamePattern } from "@/lib/cdn-paths";
 import type { PostType } from "@/lib/types";
 
 interface Props {
@@ -9,7 +11,7 @@ interface Props {
 }
 
 export default function PostTypeCard({ postType }: Props) {
-  const { state, updatePostType, removePostType } = useStore();
+  const { state, cdnManifest, updatePostType, removePostType } = useStore();
 
   const sampleVars = {
     divAbb: "BUF2",
@@ -21,6 +23,26 @@ export default function PostTypeCard({ postType }: Props) {
 
   const update = (updates: Partial<PostType>) =>
     updatePostType(postType.id, updates);
+
+  const uniqueAbbs = useMemo(() => {
+    const set = new Set<string>();
+    for (const pa of state.postingAccounts) {
+      for (const abb of pa.divisionAbbs) set.add(abb);
+    }
+    return Array.from(set);
+  }, [state.postingAccounts]);
+
+  const cdnCoverage = useMemo(() => {
+    if (!cdnManifest || !postType.filenamePattern.trim()) return null;
+    const folder = postType.cdnFolder;
+    const files = cdnManifest[folder] ?? [];
+    let found = 0;
+    for (const abb of uniqueAbbs) {
+      const prefix = resolveFilenamePattern(postType.filenamePattern, abb);
+      if (files.some((f) => f.startsWith(prefix))) found++;
+    }
+    return { found, total: uniqueAbbs.length };
+  }, [cdnManifest, postType.cdnFolder, postType.filenamePattern, uniqueAbbs]);
 
   return (
     <div
@@ -151,8 +173,21 @@ export default function PostTypeCard({ postType }: Props) {
               className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-800"
             />
             <p className="mt-0.5 text-xs text-zinc-400">
-              Empty = folder-only placeholder (Schedule types)
+              Prefix pattern matched against CDN files (e.g. matches _1.png, _2.png)
             </p>
+            {cdnCoverage && (
+              <p
+                className={`mt-1 text-xs font-medium ${
+                  cdnCoverage.found === cdnCoverage.total
+                    ? "text-green-600"
+                    : cdnCoverage.found > 0
+                      ? "text-amber-600"
+                      : "text-red-500"
+                }`}
+              >
+                {cdnCoverage.found}/{cdnCoverage.total} divisions have files
+              </p>
+            )}
           </div>
         </div>
       </div>

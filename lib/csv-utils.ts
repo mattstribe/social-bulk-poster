@@ -4,6 +4,7 @@ import type {
   Division,
   PostType,
   CsvRow,
+  CdnManifest,
   AppState,
 } from "./types";
 import { buildCdnUrl, resolveFilenamePattern } from "./cdn-paths";
@@ -62,33 +63,60 @@ export function parseDivisionsCsv(csvText: string): Division[] {
 }
 
 /**
- * Build the image URL for a division + post type combo.
+ * Build image URLs for a division + post type combo.
+ * When a CDN manifest is provided, finds all files matching the resolved
+ * prefix (e.g. "BUF_Standings" matches "BUF_Standings_1.png", "BUF_Standings_2.png").
+ * Falls back to a single best-guess URL when no manifest is available.
  */
-function divImageUrl(
+function divImageUrls(
   state: AppState,
   postType: PostType,
-  div: Division
-): string {
-  if (postType.filenamePattern.trim()) {
-    const filename = resolveFilenamePattern(
-      postType.filenamePattern,
-      div.abb
-    );
-    return buildCdnUrl(
+  div: Division,
+  manifest: CdnManifest | null
+): string[] {
+  const pattern = postType.filenamePattern.trim();
+  if (!pattern) {
+    return [
+      buildCdnUrl(
+        state.cdnBaseUrl,
+        state.leagueName,
+        state.weekNumber,
+        postType.cdnFolder,
+        ""
+      ),
+    ];
+  }
+
+  const prefix = resolveFilenamePattern(pattern, div.abb);
+  const folder = postType.cdnFolder;
+
+  if (manifest && manifest[folder]) {
+    const matches = manifest[folder]
+      .filter((f) => f.startsWith(prefix))
+      .sort();
+
+    if (matches.length) {
+      return matches.map((f) =>
+        buildCdnUrl(
+          state.cdnBaseUrl,
+          state.leagueName,
+          state.weekNumber,
+          folder,
+          f
+        )
+      );
+    }
+  }
+
+  return [
+    buildCdnUrl(
       state.cdnBaseUrl,
       state.leagueName,
       state.weekNumber,
-      postType.cdnFolder,
-      filename
-    );
-  }
-  return buildCdnUrl(
-    state.cdnBaseUrl,
-    state.leagueName,
-    state.weekNumber,
-    postType.cdnFolder,
-    ""
-  );
+      folder,
+      `${prefix}_1.png`
+    ),
+  ];
 }
 
 /**
@@ -98,7 +126,10 @@ function divImageUrl(
  * divisions, builds combined image URLs, and picks the caption template
  * based on account type (location vs tier).
  */
-export function generateCsvRows(state: AppState): CsvRow[] {
+export function generateCsvRows(
+  state: AppState,
+  manifest: CdnManifest | null = null
+): CsvRow[] {
   const rows: CsvRow[] = [];
   const enabledTypes = state.postTypes.filter((pt) => pt.enabled);
   const checkedAccounts = state.postingAccounts.filter((pa) => pa.checked);
@@ -129,8 +160,10 @@ export function generateCsvRows(state: AppState): CsvRow[] {
 
       if (!divs.length) continue;
 
-      const imageUrls = divs.map((d) => divImageUrl(state, postType, d));
-      const imageUrlStr = imageUrls.join("; ");
+      const allUrls = divs.flatMap((d) =>
+        divImageUrls(state, postType, d, manifest)
+      );
+      const imageUrlStr = allUrls.join("; ");
 
       const template =
         account.type === "tier"

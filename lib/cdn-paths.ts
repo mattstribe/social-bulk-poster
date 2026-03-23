@@ -2,7 +2,7 @@
  * Mirrors the sanitization logic from the Photoshop plugin's exportHandler.js buildCdnPath.
  * Trim, replace spaces with hyphens, strip anything that isn't alphanumeric, period, underscore, or hyphen.
  */
-function safe(s: string): string {
+export function safe(s: string): string {
   return s
     .trim()
     .replace(/\s+/g, "-")

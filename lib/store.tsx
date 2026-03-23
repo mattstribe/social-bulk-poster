@@ -15,6 +15,7 @@ import {
   type Division,
   type PostType,
   type PostingAccount,
+  type CdnManifest,
   DEFAULT_CDN_BASE_URL,
   DEFAULT_POST_TYPES,
   DEFAULT_POSTING_ACCOUNTS,
@@ -68,6 +69,9 @@ interface StoreContextValue {
   selectedDivisionAbb: string | null;
   setSelectedDivisionAbb: (abb: string | null) => void;
   savedDivisionsMap: Record<string, string[]>;
+  cdnManifest: CdnManifest | null;
+  cdnScanning: boolean;
+  scanCdn: () => Promise<CdnManifest | null>;
   saveSettings: () => void;
   setLeagueName: (name: string) => void;
   setCdnBaseUrl: (url: string) => void;
@@ -209,6 +213,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     Record<string, string[]>
   >({});
 
+  const [cdnManifest, setCdnManifest] = useState<CdnManifest | null>(null);
+  const [cdnScanning, setCdnScanning] = useState(false);
+  const cdnScanKeyRef = useRef("");
+
+  const scanCdn = useCallback(async (): Promise<CdnManifest | null> => {
+    const key = `${state.leagueName}::${state.weekNumber}`;
+    if (cdnManifest && cdnScanKeyRef.current === key) return cdnManifest;
+
+    setCdnScanning(true);
+    try {
+      const params = new URLSearchParams({
+        league: state.leagueName,
+        week: String(state.weekNumber),
+      });
+      const res = await fetch(`/api/cdn-files?${params}`);
+      if (!res.ok) throw new Error(`CDN scan failed: ${res.status}`);
+      const data = (await res.json()) as { files: CdnManifest };
+      setCdnManifest(data.files);
+      cdnScanKeyRef.current = key;
+      return data.files;
+    } catch (err) {
+      console.error("CDN scan error:", err);
+      return null;
+    } finally {
+      setCdnScanning(false);
+    }
+  }, [state.leagueName, state.weekNumber, cdnManifest]);
+
   const saveSettings = useCallback(async () => {
     const s: SavedSettings = {
       accounts: state.accounts,
@@ -236,7 +268,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const setLeagueName = useCallback(
-    (name: string) => setState((s) => ({ ...s, leagueName: name })),
+    (name: string) => {
+      setState((s) => ({ ...s, leagueName: name }));
+      setCdnManifest(null);
+    },
     []
   );
   const setCdnBaseUrl = useCallback(
@@ -244,7 +279,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     []
   );
   const setWeekNumber = useCallback(
-    (week: number) => setState((s) => ({ ...s, weekNumber: week })),
+    (week: number) => {
+      setState((s) => ({ ...s, weekNumber: week }));
+      setCdnManifest(null);
+    },
     []
   );
   const setAccounts = useCallback(
@@ -474,6 +512,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         selectedDivisionAbb,
         setSelectedDivisionAbb,
         savedDivisionsMap,
+        cdnManifest,
+        cdnScanning,
+        scanCdn,
         saveSettings,
         setLeagueName,
         setCdnBaseUrl,

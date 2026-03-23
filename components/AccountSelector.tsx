@@ -1,14 +1,45 @@
 "use client";
 
+import { useMemo } from "react";
 import { useStore } from "@/lib/store";
+import { resolveFilenamePattern } from "@/lib/cdn-paths";
+import type { CdnManifest } from "@/lib/types";
+
+type DivAvailability = "full" | "partial" | "none" | "unknown";
+
+function getDivAvailability(
+  abb: string,
+  enabledPatterned: { cdnFolder: string; filenamePattern: string }[],
+  manifest: CdnManifest | null
+): DivAvailability {
+  if (!manifest || enabledPatterned.length === 0) return "unknown";
+  let matched = 0;
+  for (const pt of enabledPatterned) {
+    const prefix = resolveFilenamePattern(pt.filenamePattern, abb);
+    const files = manifest[pt.cdnFolder] ?? [];
+    if (files.some((f) => f.startsWith(prefix))) matched++;
+  }
+  if (matched === enabledPatterned.length) return "full";
+  if (matched > 0) return "partial";
+  return "none";
+}
 
 export default function AccountSelector() {
   const {
     state,
+    cdnManifest,
     togglePostingAccount,
     toggleAllPostingAccounts,
     toggleDivisionAbb,
   } = useStore();
+
+  const enabledPatterned = useMemo(
+    () =>
+      state.postTypes.filter(
+        (pt) => pt.enabled && pt.filenamePattern.trim() !== ""
+      ),
+    [state.postTypes]
+  );
 
   const locationAccounts = state.postingAccounts.filter(
     (pa) => pa.type === "location"
@@ -58,6 +89,8 @@ export default function AccountSelector() {
               label="Location"
               color="blue"
               accounts={locationAccounts}
+              manifest={cdnManifest}
+              enabledPatterned={enabledPatterned}
               onToggleAccount={togglePostingAccount}
               onToggleDivision={toggleDivisionAbb}
             />
@@ -67,6 +100,8 @@ export default function AccountSelector() {
               label="Tier"
               color="purple"
               accounts={tierAccounts}
+              manifest={cdnManifest}
+              enabledPatterned={enabledPatterned}
               onToggleAccount={togglePostingAccount}
               onToggleDivision={toggleDivisionAbb}
             />
@@ -77,16 +112,27 @@ export default function AccountSelector() {
   );
 }
 
+const DOT_CLASSES: Record<DivAvailability, string> = {
+  full: "bg-green-500",
+  partial: "bg-amber-400",
+  none: "bg-red-400",
+  unknown: "",
+};
+
 function AccountGroup({
   label,
   color,
   accounts,
+  manifest,
+  enabledPatterned,
   onToggleAccount,
   onToggleDivision,
 }: {
   label: string;
   color: "blue" | "purple";
   accounts: import("@/lib/types").PostingAccount[];
+  manifest: CdnManifest | null;
+  enabledPatterned: { cdnFolder: string; filenamePattern: string }[];
   onToggleAccount: (id: string) => void;
   onToggleDivision: (accountId: string, abb: string) => void;
 }) {
@@ -114,7 +160,6 @@ function AccountGroup({
 
           return (
             <div key={pa.id}>
-              {/* Account row */}
               <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800">
                 <input
                   type="checkbox"
@@ -133,12 +178,17 @@ function AccountGroup({
                 </span>
               </label>
 
-              {/* Division rows */}
               {pa.divisionAbbs.length > 0 && (
                 <div className="ml-6 space-y-0.5">
                   {pa.divisionAbbs.map((abb) => {
                     const isActive =
                       !pa.disabledDivisionAbbs.includes(abb);
+                    const avail = getDivAvailability(
+                      abb,
+                      enabledPatterned,
+                      manifest
+                    );
+                    const dotClass = DOT_CLASSES[avail];
                     return (
                       <label
                         key={abb}
@@ -153,6 +203,18 @@ function AccountGroup({
                         <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400">
                           {abb}
                         </span>
+                        {dotClass && (
+                          <span
+                            className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass}`}
+                            title={
+                              avail === "full"
+                                ? "All post type files found"
+                                : avail === "partial"
+                                  ? "Some post type files missing"
+                                  : "No files found on CDN"
+                            }
+                          />
+                        )}
                       </label>
                     );
                   })}
