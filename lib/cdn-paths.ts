@@ -44,3 +44,11 @@ export function resolveFilenamePattern(
 ): string {
   return pattern.replace(/\{divAbb\}/g, divAbb);
 }
+
+/** Case-insensitive prefix match for CDN filenames (e.g. _Schedule vs _SCHEDULE). */
+export function fileMatchesFilenamePrefix(
+  filename: string,
+  prefix: string
+): boolean {
+  return filename.toLowerCase().startsWith(prefix.toLowerCase());
+}

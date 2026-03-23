@@ -2,7 +2,10 @@
 
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { resolveFilenamePattern } from "@/lib/cdn-paths";
+import {
+  resolveFilenamePattern,
+  fileMatchesFilenamePrefix,
+} from "@/lib/cdn-paths";
 import type { CdnManifest } from "@/lib/types";
 
 type DivAvailability = "full" | "partial" | "none" | "unknown";
@@ -17,7 +20,7 @@ function getDivAvailability(
   for (const pt of enabledPatterned) {
     const prefix = resolveFilenamePattern(pt.filenamePattern, abb);
     const files = manifest[pt.cdnFolder] ?? [];
-    if (files.some((f) => f.startsWith(prefix))) matched++;
+    if (files.some((f) => fileMatchesFilenamePrefix(f, prefix))) matched++;
   }
   if (matched === enabledPatterned.length) return "full";
   if (matched > 0) return "partial";
@@ -54,8 +57,8 @@ export default function AccountSelector() {
   const noneChecked = state.postingAccounts.every((pa) => !pa.checked);
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="mb-4 flex items-center justify-between">
+    <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="mb-4 flex shrink-0 items-center justify-between">
         <h2 className="text-lg font-semibold">Accounts</h2>
         {state.postingAccounts.length > 0 && (
           <div className="flex gap-2 text-xs">
@@ -83,29 +86,31 @@ export default function AccountSelector() {
           Set up posting accounts on the Setup page first.
         </p>
       ) : (
-        <div className="space-y-4">
-          {locationAccounts.length > 0 && (
-            <AccountGroup
-              label="Location"
-              color="blue"
-              accounts={locationAccounts}
-              manifest={cdnManifest}
-              enabledPatterned={enabledPatterned}
-              onToggleAccount={togglePostingAccount}
-              onToggleDivision={toggleDivisionAbb}
-            />
-          )}
-          {tierAccounts.length > 0 && (
-            <AccountGroup
-              label="Tier"
-              color="purple"
-              accounts={tierAccounts}
-              manifest={cdnManifest}
-              enabledPatterned={enabledPatterned}
-              onToggleAccount={togglePostingAccount}
-              onToggleDivision={toggleDivisionAbb}
-            />
-          )}
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <div className="space-y-4">
+            {locationAccounts.length > 0 && (
+              <AccountGroup
+                label="Location"
+                color="blue"
+                accounts={locationAccounts}
+                manifest={cdnManifest}
+                enabledPatterned={enabledPatterned}
+                onToggleAccount={togglePostingAccount}
+                onToggleDivision={toggleDivisionAbb}
+              />
+            )}
+            {tierAccounts.length > 0 && (
+              <AccountGroup
+                label="Tier"
+                color="purple"
+                accounts={tierAccounts}
+                manifest={cdnManifest}
+                enabledPatterned={enabledPatterned}
+                onToggleAccount={togglePostingAccount}
+                onToggleDivision={toggleDivisionAbb}
+              />
+            )}
+          </div>
         </div>
       )}
     </section>

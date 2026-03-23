@@ -96,6 +96,22 @@ export const DEFAULT_POSTING_ACCOUNTS: PostingAccount[] = [
   { id: "womens-tier-2", name: "Women's Tier 2", type: "tier", fbAccountId: "", igAccountId: "", divisionAbbs: ["MDW2", "MAW2", "NJW2", "PITW2"], disabledDivisionAbbs: [], checked: true },
 ];
 
+/**
+ * Apply current built-in defaults for fields that were historically empty in saved settings
+ * (e.g. Final Scores / Upcoming Games filename patterns).
+ */
+export function mergeBuiltInPostTypeDefaults(postTypes: PostType[]): PostType[] {
+  const byId = new Map(DEFAULT_POST_TYPES.map((d) => [d.id, d]));
+  return postTypes.map((pt) => {
+    const def = byId.get(pt.id);
+    if (!def || !pt.isBuiltIn) return pt;
+    if (!pt.filenamePattern?.trim() && def.filenamePattern) {
+      return { ...pt, filenamePattern: def.filenamePattern };
+    }
+    return pt;
+  });
+}
+
 export const DEFAULT_POST_TYPES: PostType[] = [
   {
     id: "standings",
@@ -135,7 +151,8 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Final-Scores",
-    filenamePattern: "",
+    /** Matches R2 files like `BUF2_SCHEDULE_1.png` in the Final-Scores folder */
+    filenamePattern: "{divAbb}_SCHEDULE",
     enabled: true,
     isBuiltIn: true,
   },
@@ -149,7 +166,8 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     defaultDate: "",
     defaultTime: "12:00",
     cdnFolder: "Upcoming-Games",
-    filenamePattern: "",
+    /** Same prefix as Final Scores; folder distinguishes upcoming vs final */
+    filenamePattern: "{divAbb}_SCHEDULE",
     enabled: true,
     isBuiltIn: true,
   },

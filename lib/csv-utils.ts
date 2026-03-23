@@ -7,7 +7,11 @@ import type {
   CdnManifest,
   AppState,
 } from "./types";
-import { buildCdnUrl, resolveFilenamePattern } from "./cdn-paths";
+import {
+  buildCdnUrl,
+  resolveFilenamePattern,
+  fileMatchesFilenamePrefix,
+} from "./cdn-paths";
 import { renderCaption } from "./caption-template";
 
 /**
@@ -92,7 +96,7 @@ function divImageUrls(
 
   if (manifest && manifest[folder]) {
     const matches = manifest[folder]
-      .filter((f) => f.startsWith(prefix))
+      .filter((f) => fileMatchesFilenamePrefix(f, prefix))
       .sort();
 
     if (matches.length) {

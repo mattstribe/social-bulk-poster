@@ -3,7 +3,10 @@
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { renderCaption } from "@/lib/caption-template";
-import { resolveFilenamePattern } from "@/lib/cdn-paths";
+import {
+  resolveFilenamePattern,
+  fileMatchesFilenamePrefix,
+} from "@/lib/cdn-paths";
 import type { PostType } from "@/lib/types";
 
 interface Props {
@@ -39,7 +42,7 @@ export default function PostTypeCard({ postType }: Props) {
     let found = 0;
     for (const abb of uniqueAbbs) {
       const prefix = resolveFilenamePattern(postType.filenamePattern, abb);
-      if (files.some((f) => f.startsWith(prefix))) found++;
+      if (files.some((f) => fileMatchesFilenamePrefix(f, prefix))) found++;
     }
     return { found, total: uniqueAbbs.length };
   }, [cdnManifest, postType.cdnFolder, postType.filenamePattern, uniqueAbbs]);

@@ -105,8 +105,7 @@ export default function AccountsPanel() {
               </p>
             )}
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Click abbs to build your selection; click again to deselect. Then
-              click a posting account to assign or unassign them all at once.
+              Select multiple.
             </p>
             <div className="flex flex-wrap gap-1.5">
               {state.divisions.map((d) => {

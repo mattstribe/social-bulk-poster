@@ -54,13 +54,6 @@ export default function GeneratePanel() {
         <h2 className="text-lg font-semibold">Generate CSV</h2>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => scanCdn()}
-            disabled={cdnScanning}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          >
-            {cdnScanning ? "Scanning..." : "Scan CDN"}
-          </button>
-          <button
             onClick={handleGenerate}
             disabled={!canGenerate || cdnScanning}
             className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
