@@ -167,9 +167,9 @@ export default function PostTypeCard({ postType }: Props) {
             <input
               type="text"
               value={postType.cdnFolder}
-              onChange={(e) => update({ cdnFolder: e.target.value })}
-              placeholder="e.g. Standings"
-              className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-800"
+              readOnly
+              disabled
+              className="w-full cursor-not-allowed rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-sm font-mono text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-400"
             />
           </div>
           <div>
@@ -179,9 +179,9 @@ export default function PostTypeCard({ postType }: Props) {
             <input
               type="text"
               value={postType.filenamePattern}
-              onChange={(e) => update({ filenamePattern: e.target.value })}
-              placeholder="{divAbb}_Type.png or leave empty"
-              className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm font-mono dark:border-zinc-600 dark:bg-zinc-800"
+              readOnly
+              disabled
+              className="w-full cursor-not-allowed rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-sm font-mono text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-400"
             />
             {cdnCoverage && (
               <p
