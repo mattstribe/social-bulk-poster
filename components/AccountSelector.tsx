@@ -104,6 +104,7 @@ export default function AccountSelector() {
             {locationPreview.length > 0 && (
               <PreviewGroup
                 label="Location Accounts"
+                count={locationPreview.length}
                 color="blue"
                 entries={locationPreview}
               />
@@ -111,6 +112,7 @@ export default function AccountSelector() {
             {tierPreview.length > 0 && (
               <PreviewGroup
                 label="Tier Accounts"
+                count={tierPreview.length}
                 color="purple"
                 entries={tierPreview}
               />
@@ -124,10 +126,12 @@ export default function AccountSelector() {
 
 function PreviewGroup({
   label,
+  count,
   color,
   entries,
 }: {
   label: string;
+  count: number;
   color: "blue" | "purple";
   entries: { account: PostingAccount; divisions: DivisionPreview[] }[];
 }) {
@@ -139,7 +143,7 @@ function PreviewGroup({
       <h3
         className={`mb-2 text-xs font-semibold uppercase tracking-wider ${colorClass}`}
       >
-        {label}
+        {label} ({count})
       </h3>
       <div className="space-y-3">
         {entries.map(({ account, divisions }) => (
