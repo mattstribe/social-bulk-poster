@@ -88,7 +88,7 @@ export function getPostTypePreviewLabel(
     case "stats":
       return "Stats";
     case "standings":
-      return "Standings";
+      return "Stand.";
     default:
       return pt.label.trim() || "Custom";
   }
