@@ -37,7 +37,7 @@ function buildPreview(
 }
 
 export default function AccountSelector() {
-  const { state, cdnManifest } = useStore();
+  const { state, cdnManifest, updatePostingAccount } = useStore();
 
   const enabledPatterned = useMemo(
     () =>
@@ -69,6 +69,7 @@ export default function AccountSelector() {
 
   const hasPreview =
     locationPreview.length > 0 || tierPreview.length > 0;
+  const selectedCount = state.postingAccounts.filter((pa) => pa.checked).length;
 
   return (
     <section className="flex h-full min-h-0 flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -76,8 +77,39 @@ export default function AccountSelector() {
         <h2 className="text-lg font-semibold">Posts this week</h2>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           Accounts and divisions that have images on the CDN for your enabled
-          post types. The CSV includes only these (no manual selection).
+          post types. Deselect any account here to exclude it from CSV.
         </p>
+        {state.postingAccounts.length > 0 && (
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-xs text-zinc-500">
+              {selectedCount} of {state.postingAccounts.length} selected
+            </p>
+            <div className="flex gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  for (const pa of state.postingAccounts) {
+                    if (!pa.checked) updatePostingAccount(pa.id, { checked: true });
+                  }
+                }}
+                className="text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Select all
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  for (const pa of state.postingAccounts) {
+                    if (pa.checked) updatePostingAccount(pa.id, { checked: false });
+                  }
+                }}
+                className="text-zinc-500 hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {state.postingAccounts.length === 0 ? (
@@ -107,6 +139,9 @@ export default function AccountSelector() {
                 count={locationPreview.length}
                 color="blue"
                 entries={locationPreview}
+                onToggleChecked={(id, checked) =>
+                  updatePostingAccount(id, { checked })
+                }
               />
             )}
             {tierPreview.length > 0 && (
@@ -115,6 +150,9 @@ export default function AccountSelector() {
                 count={tierPreview.length}
                 color="purple"
                 entries={tierPreview}
+                onToggleChecked={(id, checked) =>
+                  updatePostingAccount(id, { checked })
+                }
               />
             )}
           </div>
@@ -129,11 +167,13 @@ function PreviewGroup({
   count,
   color,
   entries,
+  onToggleChecked,
 }: {
   label: string;
   count: number;
   color: "blue" | "purple";
   entries: { account: PostingAccount; divisions: DivisionPreview[] }[];
+  onToggleChecked: (id: string, checked: boolean) => void;
 }) {
   const colorClass =
     color === "blue" ? "text-blue-600" : "text-purple-600";
@@ -147,9 +187,22 @@ function PreviewGroup({
       </h3>
       <div className="space-y-3">
         {entries.map(({ account, divisions }) => (
-          <div key={account.id}>
-            <div className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
-              {account.name || "(unnamed)"}
+          <div key={account.id} className={account.checked ? "" : "opacity-50"}>
+            <div className="flex items-center gap-2">
+              <label className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={!!account.checked}
+                  onChange={(e) =>
+                    onToggleChecked(account.id, e.target.checked)
+                  }
+                  className="accent-green-600"
+                />
+                Include
+              </label>
+              <div className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                {account.name || "(unnamed)"}
+              </div>
             </div>
             <ul className="ml-3 mt-1 space-y-0.5 border-l border-zinc-200 pl-3 dark:border-zinc-600">
               {divisions.map(({ abb, breakdown }) => (
