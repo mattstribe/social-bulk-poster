@@ -69,7 +69,17 @@ export default function AccountSelector() {
 
   const hasPreview =
     locationPreview.length > 0 || tierPreview.length > 0;
-  const selectedCount = state.postingAccounts.filter((pa) => pa.checked).length;
+  const previewAccountIds = useMemo(
+    () =>
+      new Set(
+        [...locationPreview, ...tierPreview].map(({ account }) => account.id)
+      ),
+    [locationPreview, tierPreview]
+  );
+  const totalPreviewAccounts = previewAccountIds.size;
+  const selectedCount = state.postingAccounts.filter(
+    (pa) => previewAccountIds.has(pa.id) && pa.checked
+  ).length;
 
   return (
     <section className="flex h-full min-h-0 flex-col rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -79,17 +89,19 @@ export default function AccountSelector() {
           Accounts and divisions that have images on the CDN for your enabled
           post types. Deselect any account here to exclude it from CSV.
         </p>
-        {state.postingAccounts.length > 0 && (
+        {totalPreviewAccounts > 0 && (
           <div className="mt-2 flex items-center justify-between">
             <p className="text-xs text-zinc-500">
-              {selectedCount} of {state.postingAccounts.length} selected
+              {selectedCount} of {totalPreviewAccounts} selected
             </p>
             <div className="flex gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => {
                   for (const pa of state.postingAccounts) {
-                    if (!pa.checked) updatePostingAccount(pa.id, { checked: true });
+                    if (previewAccountIds.has(pa.id) && !pa.checked) {
+                      updatePostingAccount(pa.id, { checked: true });
+                    }
                   }
                 }}
                 className="text-blue-600 hover:underline dark:text-blue-400"
@@ -100,7 +112,9 @@ export default function AccountSelector() {
                 type="button"
                 onClick={() => {
                   for (const pa of state.postingAccounts) {
-                    if (pa.checked) updatePostingAccount(pa.id, { checked: false });
+                    if (previewAccountIds.has(pa.id) && pa.checked) {
+                      updatePostingAccount(pa.id, { checked: false });
+                    }
                   }
                 }}
                 className="text-zinc-500 hover:underline"
