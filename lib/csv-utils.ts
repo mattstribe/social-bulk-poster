@@ -232,13 +232,17 @@ export function generateCsvRows(
   }
 
   for (const postType of enabledTypes) {
-    const postTime = formatPostTime(
-      postType.defaultDate,
-      postType.defaultTime
-    );
-
     for (const account of linkedAccounts) {
       if (!account.divisionAbbs.length) continue;
+
+      const postTime = formatPostTime(
+        account.type === "tier"
+          ? postType.tierDefaultDate
+          : postType.defaultDate,
+        account.type === "tier"
+          ? postType.tierDefaultTime
+          : postType.defaultTime
+      );
 
       const divs = account.divisionAbbs
         .map((abb) => divMap.get(abb))

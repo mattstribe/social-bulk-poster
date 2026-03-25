@@ -490,6 +490,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             tierCaptionTemplate: "",
             defaultDate: "",
             defaultTime: "12:00",
+            tierDefaultDate: "",
+            tierDefaultTime: "12:00",
             cdnFolder: "",
             filenamePattern: "",
             enabled: true,

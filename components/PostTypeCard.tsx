@@ -132,29 +132,68 @@ export default function PostTypeCard({ postType }: Props) {
           </p>
         </div>
 
-        {/* Date + Time */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">
-              Post Date
-            </label>
-            <input
-              type="date"
-              value={postType.defaultDate}
-              onChange={(e) => update({ defaultDate: e.target.value })}
-              className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-            />
+        {/* Location + tier schedules */}
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
+            Location accounts
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-500">
+                Post date
+              </label>
+              <input
+                type="date"
+                value={postType.defaultDate}
+                onChange={(e) => update({ defaultDate: e.target.value })}
+                className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-500">
+                Post time
+              </label>
+              <input
+                type="time"
+                value={postType.defaultTime}
+                onChange={(e) => update({ defaultTime: e.target.value })}
+                className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              />
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">
-              Post Time
-            </label>
-            <input
-              type="time"
-              value={postType.defaultTime}
-              onChange={(e) => update({ defaultTime: e.target.value })}
-              className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-            />
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
+            Tier accounts
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-500">
+                Post date
+              </label>
+              <input
+                type="date"
+                value={postType.tierDefaultDate}
+                onChange={(e) =>
+                  update({ tierDefaultDate: e.target.value })
+                }
+                className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-500">
+                Post time
+              </label>
+              <input
+                type="time"
+                value={postType.tierDefaultTime}
+                onChange={(e) =>
+                  update({ tierDefaultTime: e.target.value })
+                }
+                className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              />
+            </div>
           </div>
         </div>
 

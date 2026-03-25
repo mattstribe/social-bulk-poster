@@ -28,8 +28,12 @@ export interface PostType {
   label: string;
   captionTemplate: string;
   tierCaptionTemplate: string;
+  /** Schedule for location posting accounts */
   defaultDate: string;
   defaultTime: string;
+  /** Schedule for tier posting accounts (separate from location) */
+  tierDefaultDate: string;
+  tierDefaultTime: string;
   cdnFolder: string;
   filenamePattern: string;
   enabled: boolean;
@@ -104,12 +108,24 @@ export function mergeBuiltInPostTypeDefaults(postTypes: PostType[]): PostType[] 
   const byId = new Map(DEFAULT_POST_TYPES.map((d) => [d.id, d]));
   return postTypes.map((pt) => {
     const def = byId.get(pt.id);
-    if (!def || !pt.isBuiltIn) return pt;
+    if (!def || !pt.isBuiltIn) return normalizePostTypeSchedule(pt);
     if (!pt.filenamePattern?.trim() && def.filenamePattern) {
-      return { ...pt, filenamePattern: def.filenamePattern };
+      return normalizePostTypeSchedule({
+        ...pt,
+        filenamePattern: def.filenamePattern,
+      });
     }
-    return pt;
+    return normalizePostTypeSchedule(pt);
   });
+}
+
+/** Ensures tier schedule fields exist for saved data from before tier defaults existed. */
+export function normalizePostTypeSchedule(pt: PostType): PostType {
+  return {
+    ...pt,
+    tierDefaultDate: pt.tierDefaultDate ?? "",
+    tierDefaultTime: pt.tierDefaultTime ?? pt.defaultTime ?? "12:00",
+  };
 }
 
 export const DEFAULT_POST_TYPES: PostType[] = [
@@ -122,6 +138,8 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {week} Final Scores are in! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
     cdnFolder: "Final-Scores",
     /** Matches R2 files like `BUF2_SCHEDULE_1.png` in the Final-Scores folder */
     filenamePattern: "{divAbb}_SCHEDULE",
@@ -137,6 +155,8 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
     cdnFolder: "Upcoming-Games",
     /** Same prefix as Final Scores; folder distinguishes upcoming vs final */
     filenamePattern: "{divAbb}_SCHEDULE",
@@ -152,6 +172,8 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {week} {conf} {type} are here! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
     cdnFolder: "Standings",
     filenamePattern: "{divAbb}_Standings",
     enabled: true,
@@ -166,6 +188,8 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {week} {conf} {type} update! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
     cdnFolder: "Stats",
     /** Exactly `{divAbb}_Stats.png` — no numbered suffixes (_1, _2). */
     filenamePattern: "{divAbb}_Stats",
