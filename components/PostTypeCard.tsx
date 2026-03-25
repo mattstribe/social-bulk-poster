@@ -85,55 +85,32 @@ export default function PostTypeCard({ postType }: Props) {
       </div>
 
       <div className="space-y-3">
-        {/* Caption Template */}
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Caption Template
-          </label>
-          <textarea
-            value={postType.captionTemplate}
-            onChange={(e) => update({ captionTemplate: e.target.value })}
-            rows={2}
-            placeholder="Week {week} {divName} {type} are here! #NBHL"
-            className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
-          />
-          <p className="mt-0.5 text-xs italic text-zinc-400">
-            Sample:{" "}
-            {postType.captionTemplate
-              ? renderCaption(postType.captionTemplate, sampleVars)
-              : "Enter a template above"}
-          </p>
-        </div>
-
-        {/* Tier Caption Template */}
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-500">
-            Tier Caption Template
-          </label>
-          <textarea
-            value={postType.tierCaptionTemplate}
-            onChange={(e) => update({ tierCaptionTemplate: e.target.value })}
-            rows={2}
-            placeholder="Week {week} {conf} {type} are here! #NBHL"
-            className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
-          />
-          <p className="mt-0.5 text-xs italic text-zinc-400">
-            Sample:{" "}
-            {postType.tierCaptionTemplate
-              ? renderCaption(postType.tierCaptionTemplate, sampleVars)
-              : "Enter a template above"}
-          </p>
-        </div>
-
-        {/* Location + tier schedules */}
         <div>
           <p className="mb-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
             Location accounts
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-500">
+              Caption Template
+            </label>
+            <textarea
+              value={postType.captionTemplate}
+              onChange={(e) => update({ captionTemplate: e.target.value })}
+              rows={2}
+              placeholder="Week {week} {divName} {type} are here! #NBHL"
+              className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
+            />
+            <p className="mt-0.5 text-xs italic text-zinc-400">
+              Sample:{" "}
+              {postType.captionTemplate
+                ? renderCaption(postType.captionTemplate, sampleVars)
+                : "Enter a template above"}
+            </p>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
             <div className="col-span-2">
               <label className="mb-1 block text-xs font-medium text-zinc-500">
-                Post day (location)
+                Post day
               </label>
               <select
                 value={locWd}
@@ -145,7 +122,7 @@ export default function PostTypeCard({ postType }: Props) {
                     defaultDate: "",
                   });
                 }}
-                className="mb-2 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                className="mb-1 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
               >
                 {WEEKDAY_SELECT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -205,10 +182,28 @@ export default function PostTypeCard({ postType }: Props) {
           <p className="mb-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
             Tier accounts
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-500">
+              Tier Caption Template
+            </label>
+            <textarea
+              value={postType.tierCaptionTemplate}
+              onChange={(e) => update({ tierCaptionTemplate: e.target.value })}
+              rows={2}
+              placeholder="Week {week} {conf} {type} are here! #NBHL"
+              className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-800"
+            />
+            <p className="mt-0.5 text-xs italic text-zinc-400">
+              Sample:{" "}
+              {postType.tierCaptionTemplate
+                ? renderCaption(postType.tierCaptionTemplate, sampleVars)
+                : "Enter a template above"}
+            </p>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2">
             <div className="col-span-2">
               <label className="mb-1 block text-xs font-medium text-zinc-500">
-                Post day (tier)
+                Post day
               </label>
               <select
                 value={tierWd}
@@ -220,7 +215,7 @@ export default function PostTypeCard({ postType }: Props) {
                     tierDefaultDate: "",
                   });
                 }}
-                className="mb-2 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                className="mb-1 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
               >
                 {WEEKDAY_SELECT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
