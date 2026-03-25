@@ -28,12 +28,15 @@ export interface PostType {
   label: string;
   captionTemplate: string;
   tierCaptionTemplate: string;
-  /** Schedule for location posting accounts */
+  /** Schedule for location posting accounts (overrides league schedule when locked) */
   defaultDate: string;
   defaultTime: string;
+  /** If true, defaultDate is manual; otherwise derived from Week + Week 1 Monday. */
+  defaultDateLocked: boolean;
   /** Schedule for tier posting accounts (separate from location) */
   tierDefaultDate: string;
   tierDefaultTime: string;
+  tierDefaultDateLocked: boolean;
   cdnFolder: string;
   filenamePattern: string;
   enabled: boolean;
@@ -44,6 +47,8 @@ export interface AppState {
   leagueName: string;
   cdnBaseUrl: string;
   weekNumber: number;
+  /** ISO date (YYYY-MM-DD): Monday that starts league week 1. Drives default post dates per type. */
+  leagueWeek1Monday: string;
   accounts: SocialAccount[];
   divisions: Division[];
   postingAccounts: PostingAccount[];
@@ -119,12 +124,20 @@ export function mergeBuiltInPostTypeDefaults(postTypes: PostType[]): PostType[] 
   });
 }
 
-/** Ensures tier schedule fields exist for saved data from before tier defaults existed. */
+/** Ensures schedule lock fields and tier time exist for saved data. */
 export function normalizePostTypeSchedule(pt: PostType): PostType {
+  const legacyLocationLocked =
+    pt.defaultDateLocked === undefined && !!pt.defaultDate?.trim();
+  const legacyTierLocked =
+    pt.tierDefaultDateLocked === undefined && !!pt.tierDefaultDate?.trim();
+
   return {
     ...pt,
-    tierDefaultDate: pt.tierDefaultDate ?? "",
     tierDefaultTime: pt.tierDefaultTime ?? pt.defaultTime ?? "12:00",
+    defaultDateLocked: pt.defaultDateLocked ?? legacyLocationLocked,
+    tierDefaultDateLocked: pt.tierDefaultDateLocked ?? legacyTierLocked,
+    tierDefaultDate: pt.tierDefaultDate ?? "",
+    defaultDate: pt.defaultDate ?? "",
   };
 }
 
@@ -138,8 +151,10 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {week} Final Scores are in! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    defaultDateLocked: false,
     tierDefaultDate: "",
     tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
     cdnFolder: "Final-Scores",
     /** Matches R2 files like `BUF2_SCHEDULE_1.png` in the Final-Scores folder */
     filenamePattern: "{divAbb}_SCHEDULE",
@@ -155,8 +170,10 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    defaultDateLocked: false,
     tierDefaultDate: "",
     tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
     cdnFolder: "Upcoming-Games",
     /** Same prefix as Final Scores; folder distinguishes upcoming vs final */
     filenamePattern: "{divAbb}_SCHEDULE",
@@ -172,8 +189,10 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {week} {conf} {type} are here! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    defaultDateLocked: false,
     tierDefaultDate: "",
     tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
     cdnFolder: "Standings",
     filenamePattern: "{divAbb}_Standings",
     enabled: true,
@@ -188,8 +207,10 @@ export const DEFAULT_POST_TYPES: PostType[] = [
       "Week {week} {conf} {type} update! #NBHL #BallHockey",
     defaultDate: "",
     defaultTime: "12:00",
+    defaultDateLocked: false,
     tierDefaultDate: "",
     tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
     cdnFolder: "Stats",
     /** Exactly `{divAbb}_Stats.png` — no numbered suffixes (_1, _2). */
     filenamePattern: "{divAbb}_Stats",

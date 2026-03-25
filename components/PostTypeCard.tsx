@@ -8,6 +8,17 @@ import {
   fileMatchesPostTypePattern,
 } from "@/lib/cdn-paths";
 import type { PostType } from "@/lib/types";
+import {
+  WEEKDAY_SELECT_OPTIONS,
+  computePostTypeScheduleDate,
+  parseIsoWeekday,
+} from "@/lib/schedule-weekday";
+
+function weekdayLabelFromIso(iso: string): string {
+  const wd = parseIsoWeekday(iso);
+  if (wd === undefined) return "";
+  return WEEKDAY_SELECT_OPTIONS.find((o) => o.value === wd)?.label ?? "";
+}
 
 interface Props {
   postType: PostType;
@@ -17,6 +28,20 @@ export default function PostTypeCard({ postType }: Props) {
   const { state, cdnManifest, updatePostType, removePostType } = useStore();
 
   const w = state.weekNumber ?? 1;
+  const anchor = state.leagueWeek1Monday?.trim() ?? "";
+  const scheduledDate = computePostTypeScheduleDate(
+    postType.id,
+    w,
+    anchor
+  );
+  const locationDate =
+    postType.defaultDateLocked && postType.defaultDate.trim()
+      ? postType.defaultDate
+      : scheduledDate;
+  const tierDate =
+    postType.tierDefaultDateLocked && postType.tierDefaultDate.trim()
+      ? postType.tierDefaultDate
+      : scheduledDate;
   const sampleVars = {
     divAbb: "BUF2",
     divName: "Buffalo",
@@ -138,14 +163,40 @@ export default function PostTypeCard({ postType }: Props) {
             Location accounts
           </p>
           <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                {scheduledDate ? (
+                  <>
+                    Scheduled day:{" "}
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                      {weekdayLabelFromIso(scheduledDate)}
+                    </span>{" "}
+                    (from Week {w} + Week 1 Monday)
+                  </>
+                ) : anchor ? (
+                  <span className="text-zinc-500">
+                    No default date for this type in week {w}.
+                  </span>
+                ) : (
+                  <span className="text-amber-700 dark:text-amber-400">
+                    Set Week 1 Monday in the header to compute dates.
+                  </span>
+                )}
+              </p>
+            </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-500">
                 Post date
               </label>
               <input
                 type="date"
-                value={postType.defaultDate}
-                onChange={(e) => update({ defaultDate: e.target.value })}
+                value={locationDate}
+                onChange={(e) =>
+                  update({
+                    defaultDate: e.target.value,
+                    defaultDateLocked: true,
+                  })
+                }
                 className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
               />
             </div>
@@ -161,11 +212,37 @@ export default function PostTypeCard({ postType }: Props) {
               />
             </div>
           </div>
+          {postType.defaultDateLocked ? (
+            <p className="mt-1.5 text-xs text-zinc-500">
+              Date is manual.{" "}
+              <button
+                type="button"
+                onClick={() =>
+                  update({
+                    defaultDateLocked: false,
+                    defaultDate: "",
+                  })
+                }
+                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Match schedule again
+              </button>
+            </p>
+          ) : (
+            <p className="mt-1.5 text-xs text-zinc-500">
+              Date follows Week + Week 1 Monday. Change the date to set a
+              one-off override.
+            </p>
+          )}
         </div>
 
         <div>
           <p className="mb-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
             Tier accounts
+          </p>
+          <p className="mb-2 text-xs text-zinc-500">
+            Same league-week calendar as location; override tier date or time
+            independently if needed.
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -174,9 +251,12 @@ export default function PostTypeCard({ postType }: Props) {
               </label>
               <input
                 type="date"
-                value={postType.tierDefaultDate}
+                value={tierDate}
                 onChange={(e) =>
-                  update({ tierDefaultDate: e.target.value })
+                  update({
+                    tierDefaultDate: e.target.value,
+                    tierDefaultDateLocked: true,
+                  })
                 }
                 className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
               />
@@ -195,6 +275,28 @@ export default function PostTypeCard({ postType }: Props) {
               />
             </div>
           </div>
+          {postType.tierDefaultDateLocked ? (
+            <p className="mt-1.5 text-xs text-zinc-500">
+              Date is manual.{" "}
+              <button
+                type="button"
+                onClick={() =>
+                  update({
+                    tierDefaultDateLocked: false,
+                    tierDefaultDate: "",
+                  })
+                }
+                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Match schedule again
+              </button>
+            </p>
+          ) : (
+            <p className="mt-1.5 text-xs text-zinc-500">
+              Date follows Week + Week 1 Monday. Change the date to set a
+              one-off override.
+            </p>
+          )}
         </div>
 
         {/* CDN Folder + Filename Pattern */}

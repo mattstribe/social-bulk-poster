@@ -22,8 +22,10 @@ import {
   mergeBuiltInPostTypeDefaults,
   reorderPostTypesLikeDefaults,
 } from "./types";
-
 const STORAGE_KEY = "social-bulk-poster-state";
+
+/** League week 1 starts this Monday (YYYY-MM-DD). Week 0 upcoming games = 5 days before. */
+const DEFAULT_LEAGUE_WEEK1_MONDAY = "2026-03-30";
 
 interface SavedSettings {
   accounts: SocialAccount[];
@@ -31,6 +33,7 @@ interface SavedSettings {
   postingAccounts: PostingAccount[];
   postTypes: PostType[];
   leagueName: string;
+  leagueWeek1Monday?: string;
 }
 
 function getInitialState(): AppState {
@@ -38,6 +41,7 @@ function getInitialState(): AppState {
     leagueName: "NBHL",
     cdnBaseUrl: DEFAULT_CDN_BASE_URL,
     weekNumber: 1,
+    leagueWeek1Monday: DEFAULT_LEAGUE_WEEK1_MONDAY,
     accounts: [],
     divisions: [],
     postingAccounts: DEFAULT_POSTING_ACCOUNTS,
@@ -60,6 +64,7 @@ function settingsSnapshot(state: AppState): string {
     postingAccounts: state.postingAccounts,
     postTypes: state.postTypes,
     leagueName: state.leagueName,
+    leagueWeek1Monday: state.leagueWeek1Monday,
   };
   return JSON.stringify(s);
 }
@@ -78,6 +83,7 @@ interface StoreContextValue {
   setLeagueName: (name: string) => void;
   setCdnBaseUrl: (url: string) => void;
   setWeekNumber: (week: number) => void;
+  setLeagueWeek1Monday: (iso: string) => void;
   setAccounts: (accounts: SocialAccount[]) => void;
   setDivisions: (divisions: Division[]) => void;
   addPostingAccount: () => void;
@@ -122,6 +128,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (saved.cdnBaseUrl) {
             base = { ...base, cdnBaseUrl: saved.cdnBaseUrl };
           }
+          if (saved.leagueWeek1Monday?.trim()) {
+            base = {
+              ...base,
+              leagueWeek1Monday: saved.leagueWeek1Monday.trim(),
+            };
+          }
           if (
             saved.accounts?.length ||
             saved.divisions?.length ||
@@ -144,6 +156,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 ? saved.postTypes
                 : base.postTypes,
               leagueName: saved.leagueName || base.leagueName,
+              leagueWeek1Monday:
+                saved.leagueWeek1Monday?.trim() ||
+                base.leagueWeek1Monday,
             };
           }
         }
@@ -165,6 +180,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             base = {
               ...base,
               weekNumber: parsed.weekNumber ?? base.weekNumber,
+              leagueWeek1Monday:
+                parsed.leagueWeek1Monday?.trim() ||
+                base.leagueWeek1Monday,
               postTypes: parsed.postTypes ?? base.postTypes,
             };
           }
@@ -254,6 +272,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       postingAccounts: state.postingAccounts,
       postTypes: state.postTypes,
       leagueName: state.leagueName,
+      leagueWeek1Monday: state.leagueWeek1Monday,
     };
     setSaving(true);
     try {
@@ -291,6 +310,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     []
   );
+  const setLeagueWeek1Monday = useCallback((iso: string) => {
+    setState((s) => ({ ...s, leagueWeek1Monday: iso }));
+  }, []);
   const setAccounts = useCallback(
     (accounts: SocialAccount[]) => setState((s) => ({ ...s, accounts })),
     []
@@ -490,8 +512,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             tierCaptionTemplate: "",
             defaultDate: "",
             defaultTime: "12:00",
+            defaultDateLocked: false,
             tierDefaultDate: "",
             tierDefaultTime: "12:00",
+            tierDefaultDateLocked: false,
             cdnFolder: "",
             filenamePattern: "",
             enabled: true,
@@ -528,6 +552,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setLeagueName,
         setCdnBaseUrl,
         setWeekNumber,
+        setLeagueWeek1Monday,
         setAccounts,
         setDivisions,
         addPostingAccount,

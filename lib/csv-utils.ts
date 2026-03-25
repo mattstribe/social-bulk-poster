@@ -12,6 +12,10 @@ import {
   resolveFilenamePattern,
   fileMatchesPostTypePattern,
 } from "./cdn-paths";
+import {
+  resolveLocationPostDate,
+  resolveTierPostDate,
+} from "./schedule-weekday";
 import { renderCaption } from "./caption-template";
 
 /**
@@ -235,10 +239,24 @@ export function generateCsvRows(
     for (const account of linkedAccounts) {
       if (!account.divisionAbbs.length) continue;
 
-      const postTime = formatPostTime(
+      const dateStr =
         account.type === "tier"
-          ? postType.tierDefaultDate
-          : postType.defaultDate,
+          ? resolveTierPostDate(
+              postType.tierDefaultDateLocked,
+              postType.tierDefaultDate,
+              postType.id,
+              state.weekNumber,
+              state.leagueWeek1Monday
+            )
+          : resolveLocationPostDate(
+              postType.defaultDateLocked,
+              postType.defaultDate,
+              postType.id,
+              state.weekNumber,
+              state.leagueWeek1Monday
+            );
+      const postTime = formatPostTime(
+        dateStr,
         account.type === "tier"
           ? postType.tierDefaultTime
           : postType.defaultTime
