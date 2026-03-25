@@ -189,7 +189,7 @@ function PreviewGroup({
         {entries.map(({ account, divisions }) => (
           <div key={account.id} className={account.checked ? "" : "opacity-50"}>
             <div className="flex items-center gap-2">
-              <label className="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
+              <label className="inline-flex items-center">
                 <input
                   type="checkbox"
                   checked={!!account.checked}
@@ -198,7 +198,6 @@ function PreviewGroup({
                   }
                   className="accent-green-600"
                 />
-                Include
               </label>
               <div className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
                 {account.name || "(unnamed)"}
