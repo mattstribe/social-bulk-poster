@@ -27,6 +27,7 @@ export default function PostingAccountsPanel() {
       ),
     [state.accounts]
   );
+  const checkedCount = state.postingAccounts.filter((pa) => pa.checked).length;
 
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -39,6 +40,37 @@ export default function PostingAccountsPanel() {
           + Add Account
         </button>
       </div>
+      {state.postingAccounts.length > 0 && (
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs text-zinc-500">
+            {checkedCount} of {state.postingAccounts.length} selected for CSV
+          </p>
+          <div className="flex gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                for (const pa of state.postingAccounts) {
+                  if (!pa.checked) updatePostingAccount(pa.id, { checked: true });
+                }
+              }}
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                for (const pa of state.postingAccounts) {
+                  if (pa.checked) updatePostingAccount(pa.id, { checked: false });
+                }
+              }}
+              className="text-zinc-500 hover:underline"
+            >
+              Clear all
+            </button>
+          </div>
+        </div>
+      )}
 
       {state.postingAccounts.length === 0 ? (
         <p className="text-sm text-zinc-500">
@@ -135,12 +167,23 @@ function PostingAccountCard({
         isAssigning
           ? "cursor-pointer ring-1 ring-transparent hover:ring-blue-400 hover:shadow-md"
           : ""
-      }`}
+      } ${account.checked ? "" : "opacity-60"}`}
     >
       {/* Header row */}
       <div
         className={`flex flex-wrap items-center gap-3 rounded-t-lg px-3 py-2 ${headerBg}`}
       >
+        <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={!!account.checked}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => onUpdate({ checked: e.target.checked })}
+            className="accent-green-600"
+            title="Include this account in CSV generation"
+          />
+          CSV
+        </label>
         <div className="flex items-center gap-1">
           <div className="flex flex-col">
             <button

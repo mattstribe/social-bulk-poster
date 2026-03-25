@@ -151,6 +151,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               postingAccounts: (saved.postingAccounts || []).map((pa) => ({
                 ...pa,
                 disabledDivisionAbbs: pa.disabledDivisionAbbs ?? [],
+                checked: pa.checked ?? true,
               })),
               postTypes: saved.postTypes?.length
                 ? saved.postTypes

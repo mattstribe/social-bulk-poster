@@ -225,7 +225,7 @@ export function generateCsvRows(
     (pt) => pt.enabled && pt.filenamePattern.trim() !== ""
   );
   const linkedAccounts = state.postingAccounts.filter(
-    (pa) => pa.fbAccountId || pa.igAccountId
+    (pa) => pa.checked && (pa.fbAccountId || pa.igAccountId)
   );
 
   if (!linkedAccounts.length || !enabledTypes.length) return rows;

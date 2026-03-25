@@ -33,7 +33,7 @@ export default function GeneratePanel() {
   }, [rows, state.leagueName, state.weekNumber]);
 
   const hasLinkedAccounts = state.postingAccounts.some(
-    (pa) => pa.fbAccountId || pa.igAccountId
+    (pa) => pa.checked && (pa.fbAccountId || pa.igAccountId)
   );
   const hasEnabledPatternTypes = state.postTypes.some(
     (pt) => pt.enabled && pt.filenamePattern.trim() !== ""
@@ -81,8 +81,8 @@ export default function GeneratePanel() {
 
       {!canGenerate && (
         <p className="text-sm text-zinc-500">
-          Set league name, link FB or IG on posting accounts (Setup), and enable
-          at least one post type with a filename pattern.
+          Set league name, check at least one linked posting account in Setup,
+          and enable at least one post type with a filename pattern.
         </p>
       )}
 
