@@ -10,7 +10,7 @@ import {
 import type { PostType } from "@/lib/types";
 import {
   WEEKDAY_SELECT_OPTIONS,
-  computePostTypeScheduleDate,
+  computeScheduleDate,
   parseIsoWeekday,
 } from "@/lib/schedule-weekday";
 
@@ -29,19 +29,28 @@ export default function PostTypeCard({ postType }: Props) {
 
   const w = state.weekNumber ?? 1;
   const anchor = state.leagueWeek1Monday?.trim() ?? "";
-  const scheduledDate = computePostTypeScheduleDate(
+  const locWd = postType.locationWeekday ?? 1;
+  const tierWd = postType.tierWeekday ?? 1;
+  const scheduledLocationDate = computeScheduleDate(
     postType.id,
     w,
-    anchor
+    anchor,
+    locWd
+  );
+  const scheduledTierDate = computeScheduleDate(
+    postType.id,
+    w,
+    anchor,
+    tierWd
   );
   const locationDate =
     postType.defaultDateLocked && postType.defaultDate.trim()
       ? postType.defaultDate
-      : scheduledDate;
+      : scheduledLocationDate;
   const tierDate =
     postType.tierDefaultDateLocked && postType.tierDefaultDate.trim()
       ? postType.tierDefaultDate
-      : scheduledDate;
+      : scheduledTierDate;
   const sampleVars = {
     divAbb: "BUF2",
     divName: "Buffalo",
@@ -164,14 +173,35 @@ export default function PostTypeCard({ postType }: Props) {
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
+              <label className="mb-1 block text-xs font-medium text-zinc-500">
+                Post day (location)
+              </label>
+              <select
+                value={locWd}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  update({
+                    locationWeekday: n,
+                    defaultDateLocked: false,
+                    defaultDate: "",
+                  });
+                }}
+                className="mb-2 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              >
+                {WEEKDAY_SELECT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                {scheduledDate ? (
+                {scheduledLocationDate ? (
                   <>
-                    Scheduled day:{" "}
+                    →{" "}
                     <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {weekdayLabelFromIso(scheduledDate)}
+                      {weekdayLabelFromIso(scheduledLocationDate)}
                     </span>{" "}
-                    (from Week {w} + Week 1 Monday)
+                    {scheduledLocationDate} (Week {w})
                   </>
                 ) : anchor ? (
                   <span className="text-zinc-500">
@@ -230,8 +260,8 @@ export default function PostTypeCard({ postType }: Props) {
             </p>
           ) : (
             <p className="mt-1.5 text-xs text-zinc-500">
-              Date follows Week + Week 1 Monday. Change the date to set a
-              one-off override.
+              Date follows Week, Week 1 Monday, and post day above. Change the
+              date field for a one-off override.
             </p>
           )}
         </div>
@@ -240,11 +270,49 @@ export default function PostTypeCard({ postType }: Props) {
           <p className="mb-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
             Tier accounts
           </p>
-          <p className="mb-2 text-xs text-zinc-500">
-            Same league-week calendar as location; override tier date or time
-            independently if needed.
-          </p>
           <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="mb-1 block text-xs font-medium text-zinc-500">
+                Post day (tier)
+              </label>
+              <select
+                value={tierWd}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  update({
+                    tierWeekday: n,
+                    tierDefaultDateLocked: false,
+                    tierDefaultDate: "",
+                  });
+                }}
+                className="mb-2 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              >
+                {WEEKDAY_SELECT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                {scheduledTierDate ? (
+                  <>
+                    →{" "}
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                      {weekdayLabelFromIso(scheduledTierDate)}
+                    </span>{" "}
+                    {scheduledTierDate} (Week {w})
+                  </>
+                ) : anchor ? (
+                  <span className="text-zinc-500">
+                    No default date for this type in week {w}.
+                  </span>
+                ) : (
+                  <span className="text-amber-700 dark:text-amber-400">
+                    Set Week 1 Monday in the header to compute dates.
+                  </span>
+                )}
+              </p>
+            </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-500">
                 Post date
@@ -293,8 +361,8 @@ export default function PostTypeCard({ postType }: Props) {
             </p>
           ) : (
             <p className="mt-1.5 text-xs text-zinc-500">
-              Date follows Week + Week 1 Monday. Change the date to set a
-              one-off override.
+              Date follows Week, Week 1 Monday, and tier post day above.
+              Change the date field for a one-off override.
             </p>
           )}
         </div>

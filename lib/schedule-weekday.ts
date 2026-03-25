@@ -1,4 +1,4 @@
-/** Monday-first labels (for display only; schedule is league-week based now). */
+/** Monday-first labels (for weekday selects; values match `Date.getDay()`). */
 export const WEEKDAY_SELECT_OPTIONS: { value: number; label: string }[] = [
   { value: 1, label: "Monday" },
   { value: 2, label: "Tuesday" },
@@ -49,42 +49,62 @@ export function mondayOfLeagueWeek(
   return addDaysIso(week1MondayIso, (weekNumber - 1) * 7);
 }
 
+/** Offset from Monday to the given JS weekday (0=Sun … 6=Sat). */
+export function daysFromMondayToWeekday(weekday: number): number {
+  return weekday === 0 ? 6 : weekday - 1;
+}
+
+function builtInSkipsWeek0(postTypeId: string): boolean {
+  return (
+    postTypeId === "final-scores" ||
+    postTypeId === "standings" ||
+    postTypeId === "stats"
+  );
+}
+
 /**
- * Default post date for a post type from the selected league week and "Week 1 Monday" anchor.
- * Built-in: FS Mon, Standings Tue, UG Wed, Stats Fri for week >= 1.
- * Week 0: only Upcoming Games (Wed before week 1 Monday). Others empty until week >= 1.
- * Custom types: Monday of that league week.
+ * Calendar date for `postTypeId` in the selected league `weekNumber`, on the given `weekday`,
+ * using `leagueWeek1MondayIso` as the week-1 anchor.
+ * Week 0 uses the Monday seven days before week 1 Monday; week N≥1 uses that week’s Monday.
  */
+export function computeScheduleDate(
+  postTypeId: string,
+  weekNumber: number,
+  leagueWeek1MondayIso: string,
+  weekday: number
+): string {
+  const anchor = leagueWeek1MondayIso.trim();
+  if (!anchor) return "";
+
+  if (weekNumber === 0 && builtInSkipsWeek0(postTypeId)) {
+    return "";
+  }
+
+  let weekMondayIso: string;
+  if (weekNumber === 0) {
+    weekMondayIso = addDaysIso(anchor, -7);
+  } else {
+    const m = mondayOfLeagueWeek(anchor, weekNumber);
+    if (!m) return "";
+    weekMondayIso = m;
+  }
+
+  const wd = Number.isFinite(weekday) ? Math.min(6, Math.max(0, weekday)) : 1;
+  return addDaysIso(weekMondayIso, daysFromMondayToWeekday(wd));
+}
+
+/** @deprecated use computeScheduleDate with location/tier weekdays */
 export function computePostTypeScheduleDate(
   postTypeId: string,
   weekNumber: number,
   leagueWeek1MondayIso: string
 ): string {
-  const anchor = leagueWeek1MondayIso.trim();
-  if (!anchor) return "";
-
-  const mon = mondayOfLeagueWeek(anchor, weekNumber);
-  if (!mon && weekNumber !== 0) return "";
-
-  switch (postTypeId) {
-    case "final-scores":
-      if (weekNumber < 1) return "";
-      return mon!;
-    case "standings":
-      if (weekNumber < 1) return "";
-      return addDaysIso(mon!, 1);
-    case "upcoming-games":
-      if (weekNumber === 0) {
-        return addDaysIso(anchor, -5);
-      }
-      return addDaysIso(mon!, 2);
-    case "stats":
-      if (weekNumber < 1) return "";
-      return addDaysIso(mon!, 4);
-    default:
-      if (weekNumber < 1) return "";
-      return mon!;
-  }
+  return computeScheduleDate(
+    postTypeId,
+    weekNumber,
+    leagueWeek1MondayIso,
+    1
+  );
 }
 
 export function resolveLocationPostDate(
@@ -92,10 +112,16 @@ export function resolveLocationPostDate(
   savedDate: string,
   postTypeId: string,
   weekNumber: number,
-  leagueWeek1MondayIso: string
+  leagueWeek1MondayIso: string,
+  locationWeekday: number
 ): string {
   if (locked && savedDate.trim()) return savedDate;
-  return computePostTypeScheduleDate(postTypeId, weekNumber, leagueWeek1MondayIso);
+  return computeScheduleDate(
+    postTypeId,
+    weekNumber,
+    leagueWeek1MondayIso,
+    locationWeekday
+  );
 }
 
 export function resolveTierPostDate(
@@ -103,10 +129,16 @@ export function resolveTierPostDate(
   savedDate: string,
   postTypeId: string,
   weekNumber: number,
-  leagueWeek1MondayIso: string
+  leagueWeek1MondayIso: string,
+  tierWeekday: number
 ): string {
   if (locked && savedDate.trim()) return savedDate;
-  return computePostTypeScheduleDate(postTypeId, weekNumber, leagueWeek1MondayIso);
+  return computeScheduleDate(
+    postTypeId,
+    weekNumber,
+    leagueWeek1MondayIso,
+    tierWeekday
+  );
 }
 
 /** @deprecated kept for any stray imports */

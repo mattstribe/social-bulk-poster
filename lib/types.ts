@@ -33,10 +33,14 @@ export interface PostType {
   defaultTime: string;
   /** If true, defaultDate is manual; otherwise derived from Week + Week 1 Monday. */
   defaultDateLocked: boolean;
+  /** 0–6 (Sun–Sat). Which day of the league week location posts go out. */
+  locationWeekday: number;
   /** Schedule for tier posting accounts (separate from location) */
   tierDefaultDate: string;
   tierDefaultTime: string;
   tierDefaultDateLocked: boolean;
+  /** 0–6 (Sun–Sat). Which day of the league week tier posts go out. */
+  tierWeekday: number;
   cdnFolder: string;
   filenamePattern: string;
   enabled: boolean;
@@ -105,6 +109,92 @@ export const DEFAULT_POSTING_ACCOUNTS: PostingAccount[] = [
   { id: "womens-tier-2", name: "Women's Tier 2", type: "tier", fbAccountId: "", igAccountId: "", divisionAbbs: ["MDW2", "MAW2", "NJW2", "PITW2"], disabledDivisionAbbs: [], checked: true },
 ];
 
+export const DEFAULT_POST_TYPES: PostType[] = [
+  {
+    id: "final-scores",
+    label: "Final Scores",
+    captionTemplate:
+      "Week {week} Final Scores are in! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} Final Scores are in! #NBHL #BallHockey",
+    defaultDate: "",
+    defaultTime: "12:00",
+    defaultDateLocked: false,
+    locationWeekday: 1,
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
+    tierWeekday: 1,
+    cdnFolder: "Final-Scores",
+    /** Matches R2 files like `BUF2_SCHEDULE_1.png` in the Final-Scores folder */
+    filenamePattern: "{divAbb}_SCHEDULE",
+    enabled: true,
+    isBuiltIn: true,
+  },
+  {
+    id: "upcoming-games",
+    label: "Upcoming Games",
+    captionTemplate:
+      "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
+    defaultDate: "",
+    defaultTime: "12:00",
+    defaultDateLocked: false,
+    locationWeekday: 3,
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
+    tierWeekday: 4,
+    cdnFolder: "Upcoming-Games",
+    /** Same prefix as Final Scores; folder distinguishes upcoming vs final */
+    filenamePattern: "{divAbb}_SCHEDULE",
+    enabled: true,
+    isBuiltIn: true,
+  },
+  {
+    id: "standings",
+    label: "Standings",
+    captionTemplate:
+      "Week {week} {divName} {type} are here! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} {conf} {type} are here! #NBHL #BallHockey",
+    defaultDate: "",
+    defaultTime: "12:00",
+    defaultDateLocked: false,
+    locationWeekday: 2,
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
+    tierWeekday: 2,
+    cdnFolder: "Standings",
+    filenamePattern: "{divAbb}_Standings",
+    enabled: true,
+    isBuiltIn: true,
+  },
+  {
+    id: "stats",
+    label: "Stats",
+    captionTemplate:
+      "Week {week} {divName} {type} update! #NBHL #BallHockey",
+    tierCaptionTemplate:
+      "Week {week} {conf} {type} update! #NBHL #BallHockey",
+    defaultDate: "",
+    defaultTime: "12:00",
+    defaultDateLocked: false,
+    locationWeekday: 5,
+    tierDefaultDate: "",
+    tierDefaultTime: "12:00",
+    tierDefaultDateLocked: false,
+    tierWeekday: 5,
+    cdnFolder: "Stats",
+    /** Exactly `{divAbb}_Stats.png` — no numbered suffixes (_1, _2). */
+    filenamePattern: "{divAbb}_Stats",
+    enabled: true,
+    isBuiltIn: true,
+  },
+];
+
 /**
  * Apply current built-in defaults for fields that were historically empty in saved settings
  * (e.g. Final Scores / Upcoming Games filename patterns).
@@ -124,12 +214,14 @@ export function mergeBuiltInPostTypeDefaults(postTypes: PostType[]): PostType[] 
   });
 }
 
-/** Ensures schedule lock fields and tier time exist for saved data. */
+/** Ensures schedule lock fields, weekdays, and tier time exist for saved data. */
 export function normalizePostTypeSchedule(pt: PostType): PostType {
   const legacyLocationLocked =
     pt.defaultDateLocked === undefined && !!pt.defaultDate?.trim();
   const legacyTierLocked =
     pt.tierDefaultDateLocked === undefined && !!pt.tierDefaultDate?.trim();
+
+  const def = DEFAULT_POST_TYPES.find((d) => d.id === pt.id);
 
   return {
     ...pt,
@@ -138,86 +230,10 @@ export function normalizePostTypeSchedule(pt: PostType): PostType {
     tierDefaultDateLocked: pt.tierDefaultDateLocked ?? legacyTierLocked,
     tierDefaultDate: pt.tierDefaultDate ?? "",
     defaultDate: pt.defaultDate ?? "",
+    locationWeekday: pt.locationWeekday ?? def?.locationWeekday ?? 1,
+    tierWeekday: pt.tierWeekday ?? def?.tierWeekday ?? 1,
   };
 }
-
-export const DEFAULT_POST_TYPES: PostType[] = [
-  {
-    id: "final-scores",
-    label: "Final Scores",
-    captionTemplate:
-      "Week {week} Final Scores are in! #NBHL #BallHockey",
-    tierCaptionTemplate:
-      "Week {week} Final Scores are in! #NBHL #BallHockey",
-    defaultDate: "",
-    defaultTime: "12:00",
-    defaultDateLocked: false,
-    tierDefaultDate: "",
-    tierDefaultTime: "12:00",
-    tierDefaultDateLocked: false,
-    cdnFolder: "Final-Scores",
-    /** Matches R2 files like `BUF2_SCHEDULE_1.png` in the Final-Scores folder */
-    filenamePattern: "{divAbb}_SCHEDULE",
-    enabled: true,
-    isBuiltIn: true,
-  },
-  {
-    id: "upcoming-games",
-    label: "Upcoming Games",
-    captionTemplate:
-      "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
-    tierCaptionTemplate:
-      "Week {upcoming week} Schedule is out! #NBHL #BallHockey",
-    defaultDate: "",
-    defaultTime: "12:00",
-    defaultDateLocked: false,
-    tierDefaultDate: "",
-    tierDefaultTime: "12:00",
-    tierDefaultDateLocked: false,
-    cdnFolder: "Upcoming-Games",
-    /** Same prefix as Final Scores; folder distinguishes upcoming vs final */
-    filenamePattern: "{divAbb}_SCHEDULE",
-    enabled: true,
-    isBuiltIn: true,
-  },
-  {
-    id: "standings",
-    label: "Standings",
-    captionTemplate:
-      "Week {week} {divName} {type} are here! #NBHL #BallHockey",
-    tierCaptionTemplate:
-      "Week {week} {conf} {type} are here! #NBHL #BallHockey",
-    defaultDate: "",
-    defaultTime: "12:00",
-    defaultDateLocked: false,
-    tierDefaultDate: "",
-    tierDefaultTime: "12:00",
-    tierDefaultDateLocked: false,
-    cdnFolder: "Standings",
-    filenamePattern: "{divAbb}_Standings",
-    enabled: true,
-    isBuiltIn: true,
-  },
-  {
-    id: "stats",
-    label: "Stats",
-    captionTemplate:
-      "Week {week} {divName} {type} update! #NBHL #BallHockey",
-    tierCaptionTemplate:
-      "Week {week} {conf} {type} update! #NBHL #BallHockey",
-    defaultDate: "",
-    defaultTime: "12:00",
-    defaultDateLocked: false,
-    tierDefaultDate: "",
-    tierDefaultTime: "12:00",
-    tierDefaultDateLocked: false,
-    cdnFolder: "Stats",
-    /** Exactly `{divAbb}_Stats.png` — no numbered suffixes (_1, _2). */
-    filenamePattern: "{divAbb}_Stats",
-    enabled: true,
-    isBuiltIn: true,
-  },
-];
 
 /** Built-ins first (in default order), then any custom post types. */
 export function reorderPostTypesLikeDefaults(postTypes: PostType[]): PostType[] {

@@ -246,14 +246,16 @@ export function generateCsvRows(
               postType.tierDefaultDate,
               postType.id,
               state.weekNumber,
-              state.leagueWeek1Monday
+              state.leagueWeek1Monday,
+              postType.tierWeekday
             )
           : resolveLocationPostDate(
               postType.defaultDateLocked,
               postType.defaultDate,
               postType.id,
               state.weekNumber,
-              state.leagueWeek1Monday
+              state.leagueWeek1Monday,
+              postType.locationWeekday
             );
       const postTime = formatPostTime(
         dateStr,
