@@ -234,58 +234,55 @@ export default function AccountsPanel() {
           </>
         )}
 
-        <div className="mt-5 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-          <h3 className="mb-2 text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-            Post Type File Mapping
-          </h3>
-          <p className="mb-3 text-xs text-zinc-500">
-            Configure CDN folder and filename pattern used to find files for each post type.
-          </p>
-          <div className="space-y-2">
-            {state.postTypes.map((pt) => (
-              <div
-                key={pt.id}
-                className="grid grid-cols-1 gap-2 rounded border border-zinc-200 p-2 dark:border-zinc-700 md:grid-cols-5"
-              >
-                <div className="md:col-span-1">
-                  <p className="truncate text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-                    {pt.label}
-                  </p>
-                  <p className="truncate font-mono text-[10px] text-zinc-400">
-                    {pt.id}
-                  </p>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="mb-0.5 block text-[11px] font-medium text-zinc-500">
-                    CDN Folder
-                  </label>
-                  <input
-                    type="text"
-                    value={pt.cdnFolder}
-                    onChange={(e) =>
-                      updatePostType(pt.id, { cdnFolder: e.target.value })
-                    }
-                    className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="mb-0.5 block text-[11px] font-medium text-zinc-500">
-                    Filename Pattern
-                  </label>
-                  <input
-                    type="text"
-                    value={pt.filenamePattern}
-                    onChange={(e) =>
-                      updatePostType(pt.id, {
-                        filenamePattern: e.target.value,
-                      })
-                    }
-                    className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-800"
-                  />
-                </div>
+      </section>
+
+      <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <h2 className="mb-2 text-lg font-semibold">Post Type File Mapping</h2>
+        <p className="mb-3 text-xs text-zinc-500">
+          Configure CDN folder and filename pattern used to find files for each post type.
+        </p>
+        <div className="space-y-2">
+          {state.postTypes.map((pt) => (
+            <div
+              key={pt.id}
+              className="rounded border border-zinc-200 p-3 dark:border-zinc-700"
+            >
+              <div className="mb-2">
+                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
+                  {pt.label}
+                </p>
+                <p className="font-mono text-[11px] text-zinc-400">{pt.id}</p>
               </div>
-            ))}
-          </div>
+              <div className="mb-2">
+                <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                  CDN Folder
+                </label>
+                <input
+                  type="text"
+                  value={pt.cdnFolder}
+                  onChange={(e) =>
+                    updatePostType(pt.id, { cdnFolder: e.target.value })
+                  }
+                  className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                />
+              </div>
+              <div>
+                <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                  Filename Pattern
+                </label>
+                <input
+                  type="text"
+                  value={pt.filenamePattern}
+                  onChange={(e) =>
+                    updatePostType(pt.id, {
+                      filenamePattern: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </div>
