@@ -1,31 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { renderCaption } from "@/lib/caption-template";
-import {
-  resolveFilenamePattern,
-  fileMatchesPostTypePattern,
-} from "@/lib/cdn-paths";
 import type { PostType } from "@/lib/types";
-import {
-  WEEKDAY_SELECT_OPTIONS,
-  computeScheduleDate,
-  parseIsoWeekday,
-} from "@/lib/schedule-weekday";
-
-function weekdayLabelFromIso(iso: string): string {
-  const wd = parseIsoWeekday(iso);
-  if (wd === undefined) return "";
-  return WEEKDAY_SELECT_OPTIONS.find((o) => o.value === wd)?.label ?? "";
-}
+import { WEEKDAY_SELECT_OPTIONS, computeScheduleDate } from "@/lib/schedule-weekday";
 
 interface Props {
   postType: PostType;
 }
 
 export default function PostTypeCard({ postType }: Props) {
-  const { state, cdnManifest, updatePostType, removePostType } = useStore();
+  const { state, updatePostType, removePostType } = useStore();
 
   const w = state.weekNumber ?? 1;
   const anchor = state.leagueWeek1Monday?.trim() ?? "";
@@ -62,32 +47,6 @@ export default function PostTypeCard({ postType }: Props) {
 
   const update = (updates: Partial<PostType>) =>
     updatePostType(postType.id, updates);
-
-  const uniqueAbbs = useMemo(() => {
-    const set = new Set<string>();
-    for (const pa of state.postingAccounts) {
-      for (const abb of pa.divisionAbbs) set.add(abb);
-    }
-    return Array.from(set);
-  }, [state.postingAccounts]);
-
-  const cdnCoverage = useMemo(() => {
-    if (!cdnManifest || !postType.filenamePattern.trim()) return null;
-    const folder = postType.cdnFolder;
-    const files = cdnManifest[folder] ?? [];
-    let found = 0;
-    for (const abb of uniqueAbbs) {
-      const prefix = resolveFilenamePattern(postType.filenamePattern, abb);
-      if (
-        files.some((f) =>
-          fileMatchesPostTypePattern(f, postType.id, prefix)
-        )
-      ) {
-        found++;
-      }
-    }
-    return { found };
-  }, [cdnManifest, postType.id, postType.cdnFolder, postType.filenamePattern, uniqueAbbs]);
 
   return (
     <div
@@ -194,25 +153,6 @@ export default function PostTypeCard({ postType }: Props) {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                {scheduledLocationDate ? (
-                  <>
-                    →{" "}
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {weekdayLabelFromIso(scheduledLocationDate)}
-                    </span>{" "}
-                    {scheduledLocationDate} (Week {w})
-                  </>
-                ) : anchor ? (
-                  <span className="text-zinc-500">
-                    No default date for this type in week {w}.
-                  </span>
-                ) : (
-                  <span className="text-amber-700 dark:text-amber-400">
-                    Set Week 1 Monday in the header to compute dates.
-                  </span>
-                )}
-              </p>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-500">
@@ -258,12 +198,7 @@ export default function PostTypeCard({ postType }: Props) {
                 Match schedule again
               </button>
             </p>
-          ) : (
-            <p className="mt-1.5 text-xs text-zinc-500">
-              Date follows Week, Week 1 Monday, and post day above. Change the
-              date field for a one-off override.
-            </p>
-          )}
+          ) : null}
         </div>
 
         <div>
@@ -293,25 +228,6 @@ export default function PostTypeCard({ postType }: Props) {
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                {scheduledTierDate ? (
-                  <>
-                    →{" "}
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
-                      {weekdayLabelFromIso(scheduledTierDate)}
-                    </span>{" "}
-                    {scheduledTierDate} (Week {w})
-                  </>
-                ) : anchor ? (
-                  <span className="text-zinc-500">
-                    No default date for this type in week {w}.
-                  </span>
-                ) : (
-                  <span className="text-amber-700 dark:text-amber-400">
-                    Set Week 1 Monday in the header to compute dates.
-                  </span>
-                )}
-              </p>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-500">
@@ -359,49 +275,7 @@ export default function PostTypeCard({ postType }: Props) {
                 Match schedule again
               </button>
             </p>
-          ) : (
-            <p className="mt-1.5 text-xs text-zinc-500">
-              Date follows Week, Week 1 Monday, and tier post day above.
-              Change the date field for a one-off override.
-            </p>
-          )}
-        </div>
-
-        {/* CDN Folder + Filename Pattern */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">
-              CDN Folder
-            </label>
-            <input
-              type="text"
-              value={postType.cdnFolder}
-              readOnly
-              disabled
-              className="w-full cursor-not-allowed rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-sm font-mono text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-400"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-zinc-500">
-              Filename Pattern
-            </label>
-            <input
-              type="text"
-              value={postType.filenamePattern}
-              readOnly
-              disabled
-              className="w-full cursor-not-allowed rounded-md border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-sm font-mono text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-400"
-            />
-            {cdnCoverage && (
-              <p
-                className={`mt-1 text-xs font-medium ${
-                  cdnCoverage.found > 0 ? "text-green-600" : "text-red-500"
-                }`}
-              >
-                {cdnCoverage.found} divisions have files
-              </p>
-            )}
-          </div>
+          ) : null}
         </div>
       </div>
     </div>
