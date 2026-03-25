@@ -1,7 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { useStore } from "@/lib/store";
 import { renderCaption } from "@/lib/caption-template";
+import {
+  resolveFilenamePattern,
+  fileMatchesPostTypePattern,
+} from "@/lib/cdn-paths";
 import type { PostType } from "@/lib/types";
 import { WEEKDAY_SELECT_OPTIONS, computeScheduleDate } from "@/lib/schedule-weekday";
 
@@ -10,7 +15,7 @@ interface Props {
 }
 
 export default function PostTypeCard({ postType }: Props) {
-  const { state, updatePostType, removePostType } = useStore();
+  const { state, cdnManifest, updatePostType, removePostType } = useStore();
 
   const w = state.weekNumber ?? 1;
   const anchor = state.leagueWeek1Monday?.trim() ?? "";
@@ -48,6 +53,32 @@ export default function PostTypeCard({ postType }: Props) {
   const update = (updates: Partial<PostType>) =>
     updatePostType(postType.id, updates);
 
+  const uniqueAbbs = useMemo(() => {
+    const set = new Set<string>();
+    for (const pa of state.postingAccounts) {
+      for (const abb of pa.divisionAbbs) set.add(abb);
+    }
+    return Array.from(set);
+  }, [state.postingAccounts]);
+
+  const cdnCoverage = useMemo(() => {
+    if (!cdnManifest || !postType.filenamePattern.trim()) return null;
+    const folder = postType.cdnFolder;
+    const files = cdnManifest[folder] ?? [];
+    let found = 0;
+    for (const abb of uniqueAbbs) {
+      const prefix = resolveFilenamePattern(postType.filenamePattern, abb);
+      if (
+        files.some((f) =>
+          fileMatchesPostTypePattern(f, postType.id, prefix)
+        )
+      ) {
+        found++;
+      }
+    }
+    return { found };
+  }, [cdnManifest, postType.id, postType.cdnFolder, postType.filenamePattern, uniqueAbbs]);
+
   return (
     <div
       className={`rounded-lg border p-4 transition-colors ${
@@ -73,6 +104,15 @@ export default function PostTypeCard({ postType }: Props) {
               readOnly={postType.isBuiltIn}
             />
           </label>
+          {cdnCoverage && (
+            <span
+              className={`text-xs font-medium ${
+                cdnCoverage.found > 0 ? "text-green-600" : "text-red-500"
+              }`}
+            >
+              {cdnCoverage.found} divisions found
+            </span>
+          )}
         </div>
         {!postType.isBuiltIn && (
           <button
