@@ -152,6 +152,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 ...pa,
                 disabledDivisionAbbs: pa.disabledDivisionAbbs ?? [],
                 checked: pa.checked ?? true,
+                sponsorHandle: pa.sponsorHandle ?? "",
               })),
               postTypes: saved.postTypes?.length
                 ? saved.postTypes
@@ -337,6 +338,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             type: "location" as const,
             fbAccountId: "",
             igAccountId: "",
+            sponsorHandle: "",
             divisionAbbs: [],
             disabledDivisionAbbs: [],
             checked: true,

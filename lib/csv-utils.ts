@@ -291,6 +291,7 @@ export function generateCsvRows(
         conf: account.name,
         week: state.weekNumber,
         upcomingWeek: state.weekNumber + 1,
+        sponsor: account.sponsorHandle?.trim() ?? "",
         type: postType.label,
       });
 

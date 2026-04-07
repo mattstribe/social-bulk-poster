@@ -18,6 +18,8 @@ export interface PostingAccount {
   type: "location" | "tier";
   fbAccountId: string;
   igAccountId: string;
+  /** Optional sponsor social handle (e.g. @company) for caption variable `{sponsor}`. */
+  sponsorHandle?: string;
   divisionAbbs: string[];
   disabledDivisionAbbs: string[];
   checked: boolean;

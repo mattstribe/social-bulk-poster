@@ -47,6 +47,7 @@ export default function PostTypeCard({ postType }: Props) {
     conf: "Tier 2",
     week: w,
     upcomingWeek: w + 1,
+    sponsor: "@sponsor",
     type: postType.label,
   };
 

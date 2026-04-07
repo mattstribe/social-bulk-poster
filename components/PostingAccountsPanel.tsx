@@ -228,6 +228,18 @@ function PostingAccountCard({
               ))}
             </select>
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-emerald-600">Sponsor</span>
+            <input
+              type="text"
+              value={account.sponsorHandle ?? ""}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => onUpdate({ sponsorHandle: e.target.value })}
+              placeholder="@company"
+              className="w-32 rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700"
+              title="Used in captions as {sponsor}. Leave blank if none."
+            />
+          </div>
         </div>
 
         <button

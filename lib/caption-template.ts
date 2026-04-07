@@ -9,6 +9,7 @@ export interface CaptionVars {
    */
   upcomingWeek: number;
   type: string;
+  sponsor?: string;
 }
 
 /**
@@ -26,5 +27,6 @@ export function renderCaption(
     .replace(/\{week\}/g, String(vars.week))
     .replace(/\{upcomingWeek\}/g, String(vars.upcomingWeek))
     .replace(/\{upcoming week\}/g, String(vars.upcomingWeek))
+    .replace(/\{sponsor\}/g, vars.sponsor ?? "")
     .replace(/\{type\}/g, vars.type);
 }
