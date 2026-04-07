@@ -139,106 +139,106 @@ function PostingAccountCard({
     >
       {/* Header row */}
       <div
-        className={`flex flex-wrap items-center gap-3 rounded-t-lg px-3 py-2 ${headerBg}`}
+        className={`flex items-start gap-3 rounded-t-lg px-3 py-2 ${headerBg}`}
       >
-        <div className="flex items-center gap-1">
-          <div className="flex flex-col">
-            <button
-              onClick={(e) => { e.stopPropagation(); onMove("up"); }}
-              disabled={index === 0}
-              className="text-xs leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
-              title="Move up"
-            >
-              &#9650;
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onMove("down"); }}
-              disabled={index === total - 1}
-              className="text-xs leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
-              title="Move down"
-            >
-              &#9660;
-            </button>
+        <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+          <div className="space-y-2">
+            <div className="flex items-center gap-1">
+              <div className="flex flex-col">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onMove("up"); }}
+                  disabled={index === 0}
+                  className="text-xs leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
+                  title="Move up"
+                >
+                  &#9650;
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onMove("down"); }}
+                  disabled={index === total - 1}
+                  className="text-xs leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
+                  title="Move down"
+                >
+                  &#9660;
+                </button>
+              </div>
+              <input
+                type="text"
+                value={account.name}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => onUpdate({ name: e.target.value })}
+                placeholder="Account name (e.g. Buffalo)"
+                className="w-40 rounded border border-zinc-300 bg-white px-2 py-1 text-sm font-semibold focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800"
+              />
+              <div className="flex overflow-hidden rounded-md border border-zinc-300 text-xs dark:border-zinc-600">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onUpdate({ type: "location" }); }}
+                  className={`px-2.5 py-1 font-medium transition-colors ${
+                    account.type === "location"
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
+                >
+                  Location
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onUpdate({ type: "tier" }); }}
+                  className={`px-2.5 py-1 font-medium transition-colors ${
+                    account.type === "tier"
+                      ? "bg-purple-600 text-white"
+                      : "bg-white text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
+                >
+                  Tier
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-emerald-600">Sponsors</span>
+              <input
+                type="text"
+                value={account.sponsorHandle ?? ""}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => onUpdate({ sponsorHandle: e.target.value })}
+                placeholder="@handle"
+                className="w-32 rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700"
+                title="Used in captions as {sponsor}. Leave blank if none."
+              />
+            </div>
           </div>
-          <input
-            type="text"
-            value={account.name}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => onUpdate({ name: e.target.value })}
-            placeholder="Account name (e.g. Buffalo)"
-            className="w-40 rounded border border-zinc-300 bg-white px-2 py-1 text-sm font-semibold focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800"
-          />
-        </div>
-
-        {/* Type toggle */}
-        <div className="flex overflow-hidden rounded-md border border-zinc-300 text-xs dark:border-zinc-600">
-          <button
-            onClick={(e) => { e.stopPropagation(); onUpdate({ type: "location" }); }}
-            className={`px-2.5 py-1 font-medium transition-colors ${
-              account.type === "location"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400"
-            }`}
-          >
-            Location
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onUpdate({ type: "tier" }); }}
-            className={`px-2.5 py-1 font-medium transition-colors ${
-              account.type === "tier"
-                ? "bg-purple-600 text-white"
-                : "bg-white text-zinc-500 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400"
-            }`}
-          >
-            Tier
-          </button>
-        </div>
-
-        {/* FB / IG selectors */}
-        <div className="flex flex-1 flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-blue-600">FB</span>
-            <select
-              value={account.fbAccountId}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => onUpdate({ fbAccountId: e.target.value })}
-              className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700"
-            >
-              <option value="">--</option>
-              {fbAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name || a.id}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-pink-600">IG</span>
-            <select
-              value={account.igAccountId}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => onUpdate({ igAccountId: e.target.value })}
-              className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700"
-            >
-              <option value="">--</option>
-              {igAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name || a.id}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-emerald-600">Sponsor</span>
-            <input
-              type="text"
-              value={account.sponsorHandle ?? ""}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => onUpdate({ sponsorHandle: e.target.value })}
-              placeholder="@company"
-              className="w-32 rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700"
-              title="Used in captions as {sponsor}. Leave blank if none."
-            />
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-pink-600">IG</span>
+              <select
+                value={account.igAccountId}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => onUpdate({ igAccountId: e.target.value })}
+                className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700"
+              >
+                <option value="">--</option>
+                {igAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name || a.id}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-blue-600">FB</span>
+              <select
+                value={account.fbAccountId}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => onUpdate({ fbAccountId: e.target.value })}
+                className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-600 dark:bg-zinc-700"
+              >
+                <option value="">--</option>
+                {fbAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name || a.id}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
