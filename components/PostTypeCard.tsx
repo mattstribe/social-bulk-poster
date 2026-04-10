@@ -125,6 +125,32 @@ export default function PostTypeCard({ postType }: Props) {
         )}
       </div>
 
+      <div className="mb-3">
+        <label className="mb-1 block text-xs font-medium text-zinc-500">
+          Promo graphic
+        </label>
+        <select
+          value={postType.promoAssetId ?? ""}
+          onChange={(e) => update({ promoAssetId: e.target.value })}
+          className="w-full max-w-md rounded-md border border-zinc-300 bg-zinc-50 px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+        >
+          <option value="">None</option>
+          {state.promoAssets.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.label.trim() || "Untitled"}
+              {a.filename
+                ? ` — ${a.folder ? `${a.folder}/` : ""}${a.filename}`
+                : ""}
+            </option>
+          ))}
+        </select>
+        <p className="mt-0.5 text-xs text-zinc-400">
+          Appended after post images in CSV. Define files in Setup → Promo File
+          Mapping at{" "}
+          <span className="font-mono text-zinc-500">{state.leagueName}/promo/</span>
+        </p>
+      </div>
+
       <div className="space-y-3">
         <div>
           <p className="mb-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400">

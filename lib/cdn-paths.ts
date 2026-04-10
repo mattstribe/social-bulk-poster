@@ -34,6 +34,46 @@ export function buildCdnUrl(
   return `${base}/${path}/${safe(filename)}`;
 }
 
+/** Manifest bucket key for files under `{league}/promo/` (not week-scoped). */
+export const PROMO_MANIFEST_KEY = "promo";
+
+/**
+ * Relative path under `promo/` for matching list API results (e.g. `hats.png`, `tees/shirt.png`).
+ */
+export function promoRelativeKey(folder: string, filename: string): string {
+  const f = folder
+    .trim()
+    .replace(/\\/g, "/")
+    .replace(/^\/+|\/+$/g, "");
+  const fn = filename.trim();
+  if (!fn) return "";
+  return f ? `${f}/${fn}` : fn;
+}
+
+/**
+ * Public URL for a promo asset at `{league}/promo/{folder}/{filename}`.
+ * Empty folder → `{league}/promo/{filename}`.
+ */
+export function buildPromoCdnUrl(
+  cdnBase: string,
+  league: string,
+  folder: string,
+  filename: string
+): string {
+  const base = cdnBase.replace(/\/+$/, "");
+  const safeLeague = safe(league) || "league";
+  const fn = safe(filename.trim());
+  if (!fn) return `${base}/${safeLeague}/promo/`;
+  const segs = folder
+    .trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .map((s) => safe(s))
+    .filter(Boolean);
+  const pathSeg = [...segs, fn].join("/");
+  return `${base}/${safeLeague}/promo/${pathSeg}`;
+}
+
 /**
  * Resolve the {divAbb} placeholder inside a filename pattern.
  * e.g. "{divAbb}_Standings_1.png" with divAbb="VICM12" => "VICM12_Standings_1.png"

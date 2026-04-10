@@ -9,6 +9,9 @@ import type {
 } from "./types";
 import {
   buildCdnUrl,
+  buildPromoCdnUrl,
+  promoRelativeKey,
+  PROMO_MANIFEST_KEY,
   resolveFilenamePattern,
   fileMatchesPostTypePattern,
 } from "./cdn-paths";
@@ -207,6 +210,35 @@ function divImageUrls(
   ];
 }
 
+function promoUrlForPostType(
+  state: AppState,
+  postType: PostType,
+  manifest: CdnManifest | null
+): string | null {
+  const id = postType.promoAssetId?.trim();
+  if (!id) return null;
+  const asset = state.promoAssets.find((a) => a.id === id);
+  if (!asset?.filename?.trim()) return null;
+
+  const rel = promoRelativeKey(asset.folder, asset.filename);
+  if (!rel) return null;
+
+  if (manifest) {
+    const listed = manifest[PROMO_MANIFEST_KEY] ?? [];
+    const found = listed.some(
+      (p) => p.toLowerCase() === rel.toLowerCase()
+    );
+    if (!found) return null;
+  }
+
+  return buildPromoCdnUrl(
+    state.cdnBaseUrl,
+    state.leagueName,
+    asset.folder,
+    asset.filename
+  );
+}
+
 /**
  * Generate SocialPilot-compatible CSV rows from the current app state.
  *
@@ -277,7 +309,10 @@ export function generateCsvRows(
       const allUrls = divsWithFiles.flatMap((d) =>
         divImageUrls(state, postType, d, manifest)
       );
-      const imageUrlStr = allUrls.join("; ");
+      const promoUrl = promoUrlForPostType(state, postType, manifest);
+      const imageUrlStr = [...allUrls, ...(promoUrl ? [promoUrl] : [])].join(
+        "; "
+      );
 
       const template =
         account.type === "tier"

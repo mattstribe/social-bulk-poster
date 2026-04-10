@@ -10,6 +10,9 @@ export default function AccountsPanel() {
     setAccounts,
     setDivisions,
     updatePostType,
+    addPromoAsset,
+    updatePromoAsset,
+    removePromoAsset,
     selectedDivisionAbbs,
     setSelectedDivisionAbbs,
   } = useStore();
@@ -284,6 +287,94 @@ export default function AccountsPanel() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Promo File Mapping</h2>
+          <button
+            type="button"
+            onClick={addPromoAsset}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          >
+            + Add promo
+          </button>
+        </div>
+        <p className="mb-3 text-xs text-zinc-500">
+          Upload files under{" "}
+          <span className="font-mono text-zinc-600 dark:text-zinc-400">
+            {state.leagueName || "League"}/promo/
+          </span>{" "}
+          in your bucket (same level as{" "}
+          <span className="font-mono">exports/</span>, not inside a week folder).
+          On the main page, pick which promo goes with each post type.
+        </p>
+        {state.promoAssets.length === 0 ? (
+          <p className="text-sm text-zinc-500">No promo entries yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {state.promoAssets.map((a) => (
+              <div
+                key={a.id}
+                className="rounded border border-zinc-200 p-3 dark:border-zinc-700"
+              >
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                        Label
+                      </label>
+                      <input
+                        type="text"
+                        value={a.label}
+                        onChange={(e) =>
+                          updatePromoAsset(a.id, { label: e.target.value })
+                        }
+                        placeholder="e.g. Hats, T‑shirts"
+                        className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                        Folder under promo
+                      </label>
+                      <input
+                        type="text"
+                        value={a.folder}
+                        onChange={(e) =>
+                          updatePromoAsset(a.id, { folder: e.target.value })
+                        }
+                        placeholder="Leave empty for files directly in promo/"
+                        className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                        Filename
+                      </label>
+                      <input
+                        type="text"
+                        value={a.filename}
+                        onChange={(e) =>
+                          updatePromoAsset(a.id, { filename: e.target.value })
+                        }
+                        placeholder="e.g. hats.png"
+                        className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePromoAsset(a.id)}
+                    className="shrink-0 text-xs text-red-500 hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

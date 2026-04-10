@@ -15,6 +15,7 @@ import {
   type Division,
   type PostType,
   type PostingAccount,
+  type PromoAsset,
   type CdnManifest,
   DEFAULT_CDN_BASE_URL,
   DEFAULT_POST_TYPES,
@@ -34,6 +35,7 @@ interface SavedSettings {
   postTypes: PostType[];
   leagueName: string;
   leagueWeek1Monday?: string;
+  promoAssets?: PromoAsset[];
 }
 
 function getInitialState(): AppState {
@@ -46,6 +48,7 @@ function getInitialState(): AppState {
     divisions: [],
     postingAccounts: DEFAULT_POSTING_ACCOUNTS,
     postTypes: DEFAULT_POST_TYPES,
+    promoAssets: [],
   };
 }
 
@@ -65,6 +68,7 @@ function settingsSnapshot(state: AppState): string {
     postTypes: state.postTypes,
     leagueName: state.leagueName,
     leagueWeek1Monday: state.leagueWeek1Monday,
+    promoAssets: state.promoAssets,
   };
   return JSON.stringify(s);
 }
@@ -100,6 +104,9 @@ interface StoreContextValue {
   updatePostType: (id: string, updates: Partial<PostType>) => void;
   addPostType: () => void;
   removePostType: (id: string) => void;
+  addPromoAsset: () => void;
+  updatePromoAsset: (id: string, updates: Partial<PromoAsset>) => void;
+  removePromoAsset: (id: string) => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -161,6 +168,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               leagueWeek1Monday:
                 saved.leagueWeek1Monday?.trim() ||
                 base.leagueWeek1Monday,
+              promoAssets: saved.promoAssets ?? base.promoAssets,
             };
           }
         }
@@ -186,6 +194,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 parsed.leagueWeek1Monday?.trim() ||
                 base.leagueWeek1Monday,
               postTypes: parsed.postTypes ?? base.postTypes,
+              promoAssets: parsed.promoAssets ?? base.promoAssets,
             };
           }
         }
@@ -275,6 +284,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       postTypes: state.postTypes,
       leagueName: state.leagueName,
       leagueWeek1Monday: state.leagueWeek1Monday,
+      promoAssets: state.promoAssets,
     };
     setSaving(true);
     try {
@@ -523,10 +533,48 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             tierWeekday: 1,
             cdnFolder: "",
             filenamePattern: "",
+            promoAssetId: "",
             enabled: true,
             isBuiltIn: false,
           },
         ],
+      })),
+    []
+  );
+  const addPromoAsset = useCallback(
+    () =>
+      setState((s) => ({
+        ...s,
+        promoAssets: [
+          ...s.promoAssets,
+          {
+            id: crypto.randomUUID(),
+            label: "Promo",
+            folder: "",
+            filename: "",
+          },
+        ],
+      })),
+    []
+  );
+  const updatePromoAsset = useCallback(
+    (id: string, updates: Partial<PromoAsset>) =>
+      setState((s) => ({
+        ...s,
+        promoAssets: s.promoAssets.map((a) =>
+          a.id === id ? { ...a, ...updates } : a
+        ),
+      })),
+    []
+  );
+  const removePromoAsset = useCallback(
+    (id: string) =>
+      setState((s) => ({
+        ...s,
+        promoAssets: s.promoAssets.filter((a) => a.id !== id),
+        postTypes: s.postTypes.map((pt) =>
+          pt.promoAssetId === id ? { ...pt, promoAssetId: "" } : pt
+        ),
       })),
     []
   );
@@ -574,6 +622,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         updatePostType,
         addPostType,
         removePostType,
+        addPromoAsset,
+        updatePromoAsset,
+        removePromoAsset,
       }}
     >
       {children}

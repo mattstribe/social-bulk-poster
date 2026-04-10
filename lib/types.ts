@@ -25,6 +25,16 @@ export interface PostingAccount {
   checked: boolean;
 }
 
+/** Promo graphic under `{league}/promo/` (not under exports/Week-n). */
+export interface PromoAsset {
+  id: string;
+  /** Short label shown in dropdowns (e.g. "Hats", "T‑shirts"). */
+  label: string;
+  /** Subfolder under `promo/`, or empty for files directly in `promo/`. */
+  folder: string;
+  filename: string;
+}
+
 export interface PostType {
   id: string;
   label: string;
@@ -45,6 +55,8 @@ export interface PostType {
   tierWeekday: number;
   cdnFolder: string;
   filenamePattern: string;
+  /** Optional promo asset id to append after post images in CSV (Setup → Promo File Mapping). */
+  promoAssetId: string;
   enabled: boolean;
   isBuiltIn: boolean;
 }
@@ -59,6 +71,7 @@ export interface AppState {
   divisions: Division[];
   postingAccounts: PostingAccount[];
   postTypes: PostType[];
+  promoAssets: PromoAsset[];
 }
 
 export interface CsvRow {
@@ -130,6 +143,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     cdnFolder: "Final-Scores",
     /** Matches R2 files like `BUF2_SCHEDULE_1.png` in the Final-Scores folder */
     filenamePattern: "{divAbb}_SCHEDULE",
+    promoAssetId: "",
     enabled: true,
     isBuiltIn: true,
   },
@@ -151,6 +165,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     cdnFolder: "Upcoming-Games",
     /** Same prefix as Final Scores; folder distinguishes upcoming vs final */
     filenamePattern: "{divAbb}_SCHEDULE",
+    promoAssetId: "",
     enabled: true,
     isBuiltIn: true,
   },
@@ -171,6 +186,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     tierWeekday: 2,
     cdnFolder: "Standings",
     filenamePattern: "{divAbb}_Standings",
+    promoAssetId: "",
     enabled: true,
     isBuiltIn: true,
   },
@@ -192,6 +208,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     cdnFolder: "Stats",
     /** Exactly `{divAbb}_Stats.png` — no numbered suffixes (_1, _2). */
     filenamePattern: "{divAbb}_Stats",
+    promoAssetId: "",
     enabled: true,
     isBuiltIn: true,
   },
@@ -234,6 +251,7 @@ export function normalizePostTypeSchedule(pt: PostType): PostType {
     defaultDate: pt.defaultDate ?? "",
     locationWeekday: pt.locationWeekday ?? def?.locationWeekday ?? 1,
     tierWeekday: pt.tierWeekday ?? def?.tierWeekday ?? 1,
+    promoAssetId: pt.promoAssetId ?? "",
   };
 }
 
