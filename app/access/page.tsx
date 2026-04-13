@@ -1,10 +1,9 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function AccessPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,6 +16,7 @@ export default function AccessPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
     setError("");
 
@@ -31,8 +31,7 @@ export default function AccessPage() {
         setError(data.error || "Unable to access site.");
         return;
       }
-      router.replace(nextPath);
-      router.refresh();
+      window.location.replace(nextPath);
     } catch {
       setError("Unable to access site.");
     } finally {

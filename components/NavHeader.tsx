@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/lib/store";
@@ -12,6 +13,17 @@ const links = [
 export default function NavHeader() {
   const pathname = usePathname();
   const { hasUnsavedChanges, saving, saveSettings } = useStore();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await fetch("/api/access", { method: "DELETE" });
+    } finally {
+      window.location.replace("/access");
+    }
+  }
 
   return (
     <header className="border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -25,6 +37,13 @@ export default function NavHeader() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={logout}
+            disabled={loggingOut}
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            {loggingOut ? "Logging out..." : "Logout"}
+          </button>
           <button
             onClick={saveSettings}
             disabled={!hasUnsavedChanges || saving}
