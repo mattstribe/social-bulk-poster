@@ -38,13 +38,6 @@ export default function NavHeader() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={logout}
-            disabled={loggingOut}
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            {loggingOut ? "Logging out..." : "Logout"}
-          </button>
-          <button
             onClick={saveSettings}
             disabled={!hasUnsavedChanges || saving}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -70,6 +63,13 @@ export default function NavHeader() {
               </Link>
             ))}
           </nav>
+          <button
+            onClick={logout}
+            disabled={loggingOut}
+            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            {loggingOut ? "Logging out..." : "Logout"}
+          </button>
         </div>
       </div>
     </header>

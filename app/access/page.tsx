@@ -52,16 +52,29 @@ export default function AccessPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
+            disabled={submitting}
             className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800"
           />
           {error ? <p className="text-sm text-red-500">{error}</p> : null}
           <button
             type="submit"
             disabled={submitting || !password.trim()}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? "Checking..." : "Enter"}
+            {submitting ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                Signing in...
+              </>
+            ) : (
+              "Enter"
+            )}
           </button>
+          {submitting ? (
+            <p className="text-center text-xs text-zinc-500">
+              Verifying password...
+            </p>
+          ) : null}
         </form>
       </section>
     </main>
