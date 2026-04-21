@@ -13,6 +13,9 @@ export default function AccountsPanel() {
     addPromoAsset,
     updatePromoAsset,
     removePromoAsset,
+    addSponsorAccountMapping,
+    updateSponsorAccountMapping,
+    removeSponsorAccountMapping,
     selectedDivisionAbbs,
     setSelectedDivisionAbbs,
   } = useStore();
@@ -366,6 +369,112 @@ export default function AccountsPanel() {
                   <button
                     type="button"
                     onClick={() => removePromoAsset(a.id)}
+                    className="shrink-0 text-xs text-red-500 hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Sponsor Account Mapping</h2>
+          <button
+            type="button"
+            onClick={addSponsorAccountMapping}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          >
+            + Add sponsor account
+          </button>
+        </div>
+        <p className="mb-3 text-xs text-zinc-500">
+          Use variables like <span className="font-mono">{"{nbhl}"}</span> in
+          your caption templates. Instagram rows use IG text and Facebook rows
+          use FB text.
+        </p>
+        {state.sponsorAccountMappings.length === 0 ? (
+          <p className="text-sm text-zinc-500">No sponsor mappings yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {state.sponsorAccountMappings.map((m) => (
+              <div
+                key={m.id}
+                className="rounded border border-zinc-200 p-3 dark:border-zinc-700"
+              >
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                        Account Name
+                      </label>
+                      <input
+                        type="text"
+                        value={m.name}
+                        onChange={(e) =>
+                          updateSponsorAccountMapping(m.id, {
+                            name: e.target.value,
+                          })
+                        }
+                        placeholder="e.g. NBHL Main"
+                        className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                        Variable Name
+                      </label>
+                      <input
+                        type="text"
+                        value={m.variable}
+                        onChange={(e) =>
+                          updateSponsorAccountMapping(m.id, {
+                            variable: e.target.value,
+                          })
+                        }
+                        placeholder="nbhl (used as {nbhl})"
+                        className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                        Instagram Tag Text
+                      </label>
+                      <input
+                        type="text"
+                        value={m.instagramText}
+                        onChange={(e) =>
+                          updateSponsorAccountMapping(m.id, {
+                            instagramText: e.target.value,
+                          })
+                        }
+                        placeholder="@nbhl"
+                        className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs font-medium text-zinc-500">
+                        Facebook Tag Text
+                      </label>
+                      <input
+                        type="text"
+                        value={m.facebookText}
+                        onChange={(e) =>
+                          updateSponsorAccountMapping(m.id, {
+                            facebookText: e.target.value,
+                          })
+                        }
+                        placeholder="@NBHL Facebook Name"
+                        className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-800"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSponsorAccountMapping(m.id)}
                     className="shrink-0 text-xs text-red-500 hover:underline"
                   >
                     Remove

@@ -10,6 +10,12 @@ export interface CaptionVars {
   upcomingWeek: number;
   type: string;
   sponsor?: string;
+  platform?: "facebook" | "instagram";
+  sponsorMappings?: Array<{
+    variable: string;
+    instagramText: string;
+    facebookText: string;
+  }>;
 }
 
 /**
@@ -20,7 +26,7 @@ export function renderCaption(
   template: string,
   vars: CaptionVars
 ): string {
-  return template
+  const base = template
     .replace(/\{divAbb\}/g, vars.divAbb)
     .replace(/\{divName\}/g, vars.divName)
     .replace(/\{conf\}/g, vars.conf)
@@ -29,4 +35,23 @@ export function renderCaption(
     .replace(/\{upcoming week\}/g, String(vars.upcomingWeek))
     .replace(/\{sponsor\}/g, vars.sponsor ?? "")
     .replace(/\{type\}/g, vars.type);
+
+  if (!vars.sponsorMappings?.length || !vars.platform) return base;
+
+  const byVariable = new Map<string, string>();
+  for (const mapping of vars.sponsorMappings) {
+    const variable = mapping.variable.trim();
+    if (!variable) continue;
+    byVariable.set(
+      variable,
+      vars.platform === "instagram"
+        ? mapping.instagramText
+        : mapping.facebookText
+    );
+  }
+
+  return base.replace(/\{([^}]+)\}/g, (full, key: string) => {
+    const replacement = byVariable.get(key.trim());
+    return replacement === undefined ? full : replacement;
+  });
 }

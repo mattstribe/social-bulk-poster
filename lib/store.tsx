@@ -16,6 +16,7 @@ import {
   type PostType,
   type PostingAccount,
   type PromoAsset,
+  type SponsorAccountMapping,
   type CdnManifest,
   DEFAULT_CDN_BASE_URL,
   DEFAULT_POST_TYPES,
@@ -36,6 +37,7 @@ interface SavedSettings {
   leagueName: string;
   leagueWeek1Monday?: string;
   promoAssets?: PromoAsset[];
+  sponsorAccountMappings?: SponsorAccountMapping[];
 }
 
 function getInitialState(): AppState {
@@ -49,6 +51,7 @@ function getInitialState(): AppState {
     postingAccounts: DEFAULT_POSTING_ACCOUNTS,
     postTypes: DEFAULT_POST_TYPES,
     promoAssets: [],
+    sponsorAccountMappings: [],
   };
 }
 
@@ -69,6 +72,7 @@ function settingsSnapshot(state: AppState): string {
     leagueName: state.leagueName,
     leagueWeek1Monday: state.leagueWeek1Monday,
     promoAssets: state.promoAssets,
+    sponsorAccountMappings: state.sponsorAccountMappings,
   };
   return JSON.stringify(s);
 }
@@ -107,6 +111,12 @@ interface StoreContextValue {
   addPromoAsset: () => void;
   updatePromoAsset: (id: string, updates: Partial<PromoAsset>) => void;
   removePromoAsset: (id: string) => void;
+  addSponsorAccountMapping: () => void;
+  updateSponsorAccountMapping: (
+    id: string,
+    updates: Partial<SponsorAccountMapping>
+  ) => void;
+  removeSponsorAccountMapping: (id: string) => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -169,6 +179,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 saved.leagueWeek1Monday?.trim() ||
                 base.leagueWeek1Monday,
               promoAssets: saved.promoAssets ?? base.promoAssets,
+              sponsorAccountMappings:
+                saved.sponsorAccountMappings ?? base.sponsorAccountMappings,
             };
           }
         }
@@ -195,6 +207,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 base.leagueWeek1Monday,
               postTypes: parsed.postTypes ?? base.postTypes,
               promoAssets: parsed.promoAssets ?? base.promoAssets,
+              sponsorAccountMappings:
+                parsed.sponsorAccountMappings ?? base.sponsorAccountMappings,
             };
           }
         }
@@ -285,6 +299,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       leagueName: state.leagueName,
       leagueWeek1Monday: state.leagueWeek1Monday,
       promoAssets: state.promoAssets,
+      sponsorAccountMappings: state.sponsorAccountMappings,
     };
     setSaving(true);
     try {
@@ -578,6 +593,43 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })),
     []
   );
+  const addSponsorAccountMapping = useCallback(
+    () =>
+      setState((s) => ({
+        ...s,
+        sponsorAccountMappings: [
+          ...s.sponsorAccountMappings,
+          {
+            id: crypto.randomUUID(),
+            name: "Sponsor",
+            variable: "",
+            instagramText: "",
+            facebookText: "",
+          },
+        ],
+      })),
+    []
+  );
+  const updateSponsorAccountMapping = useCallback(
+    (id: string, updates: Partial<SponsorAccountMapping>) =>
+      setState((s) => ({
+        ...s,
+        sponsorAccountMappings: s.sponsorAccountMappings.map((m) =>
+          m.id === id ? { ...m, ...updates } : m
+        ),
+      })),
+    []
+  );
+  const removeSponsorAccountMapping = useCallback(
+    (id: string) =>
+      setState((s) => ({
+        ...s,
+        sponsorAccountMappings: s.sponsorAccountMappings.filter(
+          (m) => m.id !== id
+        ),
+      })),
+    []
+  );
   const removePostType = useCallback(
     (id: string) =>
       setState((s) => ({
@@ -625,6 +677,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         addPromoAsset,
         updatePromoAsset,
         removePromoAsset,
+        addSponsorAccountMapping,
+        updateSponsorAccountMapping,
+        removeSponsorAccountMapping,
       }}
     >
       {children}

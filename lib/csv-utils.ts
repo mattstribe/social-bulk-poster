@@ -320,7 +320,7 @@ export function generateCsvRows(
           : postType.captionTemplate;
 
       const firstDiv = divsWithFiles[0];
-      const caption = renderCaption(template, {
+      const sharedCaptionVars = {
         divAbb: divsWithFiles.length === 1 ? firstDiv.abb : "",
         divName: account.name,
         conf: account.name,
@@ -328,9 +328,14 @@ export function generateCsvRows(
         upcomingWeek: state.weekNumber + 1,
         sponsor: account.sponsorHandle?.trim() ?? "",
         type: postType.label,
-      });
+        sponsorMappings: state.sponsorAccountMappings,
+      } as const;
 
       if (account.fbAccountId) {
+        const caption = renderCaption(template, {
+          ...sharedCaptionVars,
+          platform: "facebook",
+        });
         rows.push({
           caption,
           imageUrl: imageUrlStr,
@@ -341,6 +346,10 @@ export function generateCsvRows(
         });
       }
       if (account.igAccountId) {
+        const caption = renderCaption(template, {
+          ...sharedCaptionVars,
+          platform: "instagram",
+        });
         rows.push({
           caption,
           imageUrl: imageUrlStr,

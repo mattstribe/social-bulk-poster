@@ -35,6 +35,18 @@ export interface PromoAsset {
   filename: string;
 }
 
+export interface SponsorAccountMapping {
+  id: string;
+  /** Friendly name shown in Setup (e.g. "NBHL main"). */
+  name: string;
+  /** Placeholder variable used in captions, without braces (e.g. "nbhl"). */
+  variable: string;
+  /** Text to inject for Instagram captions. */
+  instagramText: string;
+  /** Text to inject for Facebook captions. */
+  facebookText: string;
+}
+
 export interface PostType {
   id: string;
   label: string;
@@ -72,6 +84,7 @@ export interface AppState {
   postingAccounts: PostingAccount[];
   postTypes: PostType[];
   promoAssets: PromoAsset[];
+  sponsorAccountMappings: SponsorAccountMapping[];
 }
 
 export interface CsvRow {
