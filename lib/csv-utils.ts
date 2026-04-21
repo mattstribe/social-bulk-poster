@@ -328,7 +328,7 @@ export function generateCsvRows(
         upcomingWeek: state.weekNumber + 1,
         sponsor: account.sponsorHandle?.trim() ?? "",
         type: postType.label,
-        sponsorMappings: state.sponsorAccountMappings,
+        taggedAccountMappings: state.taggedAccountMappings,
       } as const;
 
       if (account.fbAccountId) {

@@ -16,7 +16,7 @@ import {
   type PostType,
   type PostingAccount,
   type PromoAsset,
-  type SponsorAccountMapping,
+  type TaggedAccountMapping,
   type CdnManifest,
   DEFAULT_CDN_BASE_URL,
   DEFAULT_POST_TYPES,
@@ -37,7 +37,7 @@ interface SavedSettings {
   leagueName: string;
   leagueWeek1Monday?: string;
   promoAssets?: PromoAsset[];
-  sponsorAccountMappings?: SponsorAccountMapping[];
+  taggedAccountMappings?: TaggedAccountMapping[];
 }
 
 function getInitialState(): AppState {
@@ -51,7 +51,7 @@ function getInitialState(): AppState {
     postingAccounts: DEFAULT_POSTING_ACCOUNTS,
     postTypes: DEFAULT_POST_TYPES,
     promoAssets: [],
-    sponsorAccountMappings: [],
+    taggedAccountMappings: [],
   };
 }
 
@@ -72,7 +72,7 @@ function settingsSnapshot(state: AppState): string {
     leagueName: state.leagueName,
     leagueWeek1Monday: state.leagueWeek1Monday,
     promoAssets: state.promoAssets,
-    sponsorAccountMappings: state.sponsorAccountMappings,
+    taggedAccountMappings: state.taggedAccountMappings,
   };
   return JSON.stringify(s);
 }
@@ -111,12 +111,12 @@ interface StoreContextValue {
   addPromoAsset: () => void;
   updatePromoAsset: (id: string, updates: Partial<PromoAsset>) => void;
   removePromoAsset: (id: string) => void;
-  addSponsorAccountMapping: () => void;
-  updateSponsorAccountMapping: (
+  addTaggedAccountMapping: () => void;
+  updateTaggedAccountMapping: (
     id: string,
-    updates: Partial<SponsorAccountMapping>
+    updates: Partial<TaggedAccountMapping>
   ) => void;
-  removeSponsorAccountMapping: (id: string) => void;
+  removeTaggedAccountMapping: (id: string) => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -179,8 +179,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 saved.leagueWeek1Monday?.trim() ||
                 base.leagueWeek1Monday,
               promoAssets: saved.promoAssets ?? base.promoAssets,
-              sponsorAccountMappings:
-                saved.sponsorAccountMappings ?? base.sponsorAccountMappings,
+              taggedAccountMappings:
+                saved.taggedAccountMappings ?? base.taggedAccountMappings,
             };
           }
         }
@@ -207,8 +207,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 base.leagueWeek1Monday,
               postTypes: parsed.postTypes ?? base.postTypes,
               promoAssets: parsed.promoAssets ?? base.promoAssets,
-              sponsorAccountMappings:
-                parsed.sponsorAccountMappings ?? base.sponsorAccountMappings,
+              taggedAccountMappings:
+                parsed.taggedAccountMappings ?? base.taggedAccountMappings,
             };
           }
         }
@@ -299,7 +299,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       leagueName: state.leagueName,
       leagueWeek1Monday: state.leagueWeek1Monday,
       promoAssets: state.promoAssets,
-      sponsorAccountMappings: state.sponsorAccountMappings,
+      taggedAccountMappings: state.taggedAccountMappings,
     };
     setSaving(true);
     try {
@@ -593,12 +593,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })),
     []
   );
-  const addSponsorAccountMapping = useCallback(
+  const addTaggedAccountMapping = useCallback(
     () =>
       setState((s) => ({
         ...s,
-        sponsorAccountMappings: [
-          ...s.sponsorAccountMappings,
+        taggedAccountMappings: [
+          ...s.taggedAccountMappings,
           {
             id: crypto.randomUUID(),
             name: "Sponsor",
@@ -610,21 +610,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       })),
     []
   );
-  const updateSponsorAccountMapping = useCallback(
-    (id: string, updates: Partial<SponsorAccountMapping>) =>
+  const updateTaggedAccountMapping = useCallback(
+    (id: string, updates: Partial<TaggedAccountMapping>) =>
       setState((s) => ({
         ...s,
-        sponsorAccountMappings: s.sponsorAccountMappings.map((m) =>
+        taggedAccountMappings: s.taggedAccountMappings.map((m) =>
           m.id === id ? { ...m, ...updates } : m
         ),
       })),
     []
   );
-  const removeSponsorAccountMapping = useCallback(
+  const removeTaggedAccountMapping = useCallback(
     (id: string) =>
       setState((s) => ({
         ...s,
-        sponsorAccountMappings: s.sponsorAccountMappings.filter(
+        taggedAccountMappings: s.taggedAccountMappings.filter(
           (m) => m.id !== id
         ),
       })),
@@ -677,9 +677,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         addPromoAsset,
         updatePromoAsset,
         removePromoAsset,
-        addSponsorAccountMapping,
-        updateSponsorAccountMapping,
-        removeSponsorAccountMapping,
+        addTaggedAccountMapping,
+        updateTaggedAccountMapping,
+        removeTaggedAccountMapping,
       }}
     >
       {children}

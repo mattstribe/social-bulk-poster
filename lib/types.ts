@@ -35,7 +35,7 @@ export interface PromoAsset {
   filename: string;
 }
 
-export interface SponsorAccountMapping {
+export interface TaggedAccountMapping {
   id: string;
   /** Friendly name shown in Setup (e.g. "NBHL main"). */
   name: string;
@@ -84,7 +84,7 @@ export interface AppState {
   postingAccounts: PostingAccount[];
   postTypes: PostType[];
   promoAssets: PromoAsset[];
-  sponsorAccountMappings: SponsorAccountMapping[];
+  taggedAccountMappings: TaggedAccountMapping[];
 }
 
 export interface CsvRow {

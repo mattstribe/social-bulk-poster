@@ -11,7 +11,7 @@ export interface CaptionVars {
   type: string;
   sponsor?: string;
   platform?: "facebook" | "instagram";
-  sponsorMappings?: Array<{
+  taggedAccountMappings?: Array<{
     variable: string;
     instagramText: string;
     facebookText: string;
@@ -36,10 +36,10 @@ export function renderCaption(
     .replace(/\{sponsor\}/g, vars.sponsor ?? "")
     .replace(/\{type\}/g, vars.type);
 
-  if (!vars.sponsorMappings?.length || !vars.platform) return base;
+  if (!vars.taggedAccountMappings?.length || !vars.platform) return base;
 
   const byVariable = new Map<string, string>();
-  for (const mapping of vars.sponsorMappings) {
+  for (const mapping of vars.taggedAccountMappings) {
     const variable = mapping.variable.trim();
     if (!variable) continue;
     byVariable.set(

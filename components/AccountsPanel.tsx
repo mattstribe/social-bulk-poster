@@ -13,9 +13,9 @@ export default function AccountsPanel() {
     addPromoAsset,
     updatePromoAsset,
     removePromoAsset,
-    addSponsorAccountMapping,
-    updateSponsorAccountMapping,
-    removeSponsorAccountMapping,
+    addTaggedAccountMapping,
+    updateTaggedAccountMapping,
+    removeTaggedAccountMapping,
     selectedDivisionAbbs,
     setSelectedDivisionAbbs,
   } = useStore();
@@ -382,13 +382,13 @@ export default function AccountsPanel() {
 
       <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Sponsor Account Mapping</h2>
+          <h2 className="text-lg font-semibold">Tagged Account Mapping</h2>
           <button
             type="button"
-            onClick={addSponsorAccountMapping}
+            onClick={addTaggedAccountMapping}
             className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
           >
-            + Add sponsor account
+            + Add tagged account
           </button>
         </div>
         <p className="mb-3 text-xs text-zinc-500">
@@ -396,11 +396,11 @@ export default function AccountsPanel() {
           your caption templates. Instagram rows use IG text and Facebook rows
           use FB text.
         </p>
-        {state.sponsorAccountMappings.length === 0 ? (
-          <p className="text-sm text-zinc-500">No sponsor mappings yet.</p>
+        {state.taggedAccountMappings.length === 0 ? (
+          <p className="text-sm text-zinc-500">No tagged account mappings yet.</p>
         ) : (
           <div className="space-y-2">
-            {state.sponsorAccountMappings.map((m) => (
+            {state.taggedAccountMappings.map((m) => (
               <div
                 key={m.id}
                 className="rounded border border-zinc-200 p-3 dark:border-zinc-700"
@@ -415,7 +415,7 @@ export default function AccountsPanel() {
                         type="text"
                         value={m.name}
                         onChange={(e) =>
-                          updateSponsorAccountMapping(m.id, {
+                          updateTaggedAccountMapping(m.id, {
                             name: e.target.value,
                           })
                         }
@@ -431,7 +431,7 @@ export default function AccountsPanel() {
                         type="text"
                         value={m.variable}
                         onChange={(e) =>
-                          updateSponsorAccountMapping(m.id, {
+                          updateTaggedAccountMapping(m.id, {
                             variable: e.target.value,
                           })
                         }
@@ -447,7 +447,7 @@ export default function AccountsPanel() {
                         type="text"
                         value={m.instagramText}
                         onChange={(e) =>
-                          updateSponsorAccountMapping(m.id, {
+                          updateTaggedAccountMapping(m.id, {
                             instagramText: e.target.value,
                           })
                         }
@@ -463,7 +463,7 @@ export default function AccountsPanel() {
                         type="text"
                         value={m.facebookText}
                         onChange={(e) =>
-                          updateSponsorAccountMapping(m.id, {
+                          updateTaggedAccountMapping(m.id, {
                             facebookText: e.target.value,
                           })
                         }
@@ -474,7 +474,7 @@ export default function AccountsPanel() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeSponsorAccountMapping(m.id)}
+                    onClick={() => removeTaggedAccountMapping(m.id)}
                     className="shrink-0 text-xs text-red-500 hover:underline"
                   >
                     Remove
