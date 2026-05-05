@@ -247,6 +247,11 @@ function promoUrlForPostType(
  * files on the CDN (per manifest) are included—no manual account/division
  * checkboxes. Rows are skipped when the manifest has no matches for that
  * account/post type combo.
+ *
+ * Carousel limit: at most {@link MAX_CAROUSEL_IMAGES} images per post. With a
+ * promo graphic, only 9 content images are allowed so the promo can be last.
+ * When there are more, URLs are split into multiple posts with balanced chunk
+ * sizes and "Part N of M" at the start of the caption; promo is appended to each.
  */
 export function generateCsvRows(
   state: AppState,
@@ -310,9 +315,10 @@ export function generateCsvRows(
         divImageUrls(state, postType, d, manifest)
       );
       const promoUrl = promoUrlForPostType(state, postType, manifest);
-      const imageUrlStr = [...allUrls, ...(promoUrl ? [promoUrl] : [])].join(
-        "; "
-      );
+      const maxContentUrls = promoUrl
+        ? MAX_CAROUSEL_IMAGES - 1
+        : MAX_CAROUSEL_IMAGES;
+      const urlChunks = balancedContentChunks(allUrls, maxContentUrls);
 
       const template =
         account.type === "tier"
@@ -331,33 +337,51 @@ export function generateCsvRows(
         taggedAccountMappings: state.taggedAccountMappings,
       } as const;
 
-      if (account.fbAccountId) {
-        const caption = renderCaption(template, {
-          ...sharedCaptionVars,
-          platform: "facebook",
-        });
-        rows.push({
-          caption,
-          imageUrl: imageUrlStr,
-          postTime,
-          accountId: account.fbAccountId,
-          firstComment: "",
-          tags: "",
-        });
-      }
-      if (account.igAccountId) {
-        const caption = renderCaption(template, {
-          ...sharedCaptionVars,
-          platform: "instagram",
-        });
-        rows.push({
-          caption,
-          imageUrl: imageUrlStr,
-          postTime,
-          accountId: account.igAccountId,
-          firstComment: "",
-          tags: "",
-        });
+      const totalParts = urlChunks.length;
+      let partIndex = 0;
+      for (const chunkUrls of urlChunks) {
+        partIndex += 1;
+        const imageUrlStr = [
+          ...chunkUrls,
+          ...(promoUrl ? [promoUrl] : []),
+        ].join("; ");
+        const partPrefix =
+          totalParts > 1
+            ? `(Part ${partIndex} of ${totalParts}) `
+            : "";
+
+        if (account.fbAccountId) {
+          const caption =
+            partPrefix +
+            renderCaption(template, {
+              ...sharedCaptionVars,
+              platform: "facebook",
+            });
+          rows.push({
+            caption,
+            imageUrl: imageUrlStr,
+            postTime,
+            accountId: account.fbAccountId,
+            firstComment: "",
+            tags: "",
+          });
+        }
+        if (account.igAccountId) {
+          const caption =
+            partPrefix +
+            renderCaption(template, {
+              ...sharedCaptionVars,
+              platform: "instagram",
+            });
+          rows.push({
+            caption,
+            imageUrl: imageUrlStr,
+            postTime,
+            accountId: account.igAccountId,
+            firstComment: "",
+            tags: "",
+          });
+        }
       }
     }
   }
@@ -368,6 +392,34 @@ export function generateCsvRows(
 function formatPostTime(date: string, time: string): string {
   if (!date) return "";
   return `${date} ${time || "12:00"}`;
+}
+
+/** Platforms typically cap carousels at 10 images; reserve the last slot for promo when present. */
+const MAX_CAROUSEL_IMAGES = 10;
+
+/**
+ * Split content image URLs into as few posts as possible, each with at most
+ * `maxContentPerPost` images, distributing counts evenly (e.g. 10 → 5+5, not 9+1).
+ */
+function balancedContentChunks(
+  urls: string[],
+  maxContentPerPost: number
+): string[][] {
+  const n = urls.length;
+  if (n === 0) return [];
+  if (n <= maxContentPerPost) return [urls];
+
+  const numChunks = Math.ceil(n / maxContentPerPost);
+  const base = Math.floor(n / numChunks);
+  const remainder = n % numChunks;
+  const chunks: string[][] = [];
+  let start = 0;
+  for (let i = 0; i < numChunks; i++) {
+    const size = base + (i < remainder ? 1 : 0);
+    chunks.push(urls.slice(start, start + size));
+    start += size;
+  }
+  return chunks;
 }
 
 /**
