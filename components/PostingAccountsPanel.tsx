@@ -12,6 +12,7 @@ export default function PostingAccountsPanel() {
     removePostingAccount,
     updatePostingAccount,
     movePostingAccount,
+    moveDivisionAbbOnAccount,
     toggleDivisionOnAccount,
     unassignDivision,
   } = useStore();
@@ -59,6 +60,9 @@ export default function PostingAccountsPanel() {
               onUpdate={(updates) => updatePostingAccount(pa.id, updates)}
               onRemove={() => removePostingAccount(pa.id)}
               onMove={(dir) => movePostingAccount(pa.id, dir)}
+              onMoveDivision={(abb, dir) =>
+                moveDivisionAbbOnAccount(pa.id, abb, dir)
+              }
               onToggleDivision={() => toggleDivisionOnAccount(pa.id)}
               onUnassign={(abb) => unassignDivision(pa.id, abb)}
             />
@@ -91,6 +95,7 @@ interface CardProps {
   onUpdate: (updates: Partial<import("@/lib/types").PostingAccount>) => void;
   onRemove: () => void;
   onMove: (dir: "up" | "down") => void;
+  onMoveDivision: (abb: string, dir: "up" | "down") => void;
   onToggleDivision: () => void;
   onUnassign: (abb: string) => void;
 }
@@ -106,6 +111,7 @@ function PostingAccountCard({
   onUpdate,
   onRemove,
   onMove,
+  onMoveDivision,
   onToggleDivision,
   onUnassign,
 }: CardProps) {
@@ -251,28 +257,57 @@ function PostingAccountCard({
         </button>
       </div>
 
-      {/* Assigned divisions */}
+      {/* Assigned divisions (list order = CSV image order) */}
       <div className="px-3 py-2">
         <div className="flex flex-wrap items-center gap-1.5">
           {noActiveDivisions ? (
             <span className="text-xs text-zinc-400">No divisions assigned</span>
           ) : (
             <>
-              {account.divisionAbbs.map((abb) => {
+              {account.divisionAbbs.map((abb, abbIdx) => {
                 const isNew = !savedAbbs.includes(abb);
+                const n = account.divisionAbbs.length;
                 return (
                   <span
                     key={abb}
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-mono font-medium ${
+                    className={`inline-flex items-center gap-0.5 rounded-full pl-0.5 pr-2 py-0.5 text-xs font-mono font-medium ${
                       isNew
                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                         : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
                     }`}
                   >
+                    <span className="flex flex-col">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onMoveDivision(abb, "up");
+                        }}
+                        disabled={abbIdx === 0}
+                        className="leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
+                        title="Earlier in list"
+                      >
+                        &#9650;
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onMoveDivision(abb, "down");
+                        }}
+                        disabled={abbIdx >= n - 1}
+                        className="leading-none text-zinc-400 transition-colors hover:text-zinc-700 disabled:opacity-20 dark:hover:text-zinc-200"
+                        title="Later in list"
+                      >
+                        &#9660;
+                      </button>
+                    </span>
                     {abb}
                     <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); onUnassign(abb); }}
                       className="text-zinc-400 hover:text-red-500"
+                      title="Remove"
                     >
                       &times;
                     </button>

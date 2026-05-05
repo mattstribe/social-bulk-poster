@@ -101,6 +101,11 @@ interface StoreContextValue {
   toggleAllPostingAccounts: (checked: boolean) => void;
   toggleDivisionAbb: (accountId: string, abb: string) => void;
   movePostingAccount: (id: string, direction: "up" | "down") => void;
+  moveDivisionAbbOnAccount: (
+    accountId: string,
+    divAbb: string,
+    direction: "up" | "down"
+  ) => void;
   assignDivision: (accountId: string, divAbb: string) => void;
   unassignDivision: (accountId: string, divAbb: string) => void;
   toggleDivisionOnAccount: (accountId: string) => void;
@@ -460,6 +465,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const moveDivisionAbbOnAccount = useCallback(
+    (accountId: string, divAbb: string, direction: "up" | "down") =>
+      setState((s) => ({
+        ...s,
+        postingAccounts: s.postingAccounts.map((pa) => {
+          if (pa.id !== accountId) return pa;
+          const i = pa.divisionAbbs.indexOf(divAbb);
+          if (i === -1) return pa;
+          const j = direction === "up" ? i - 1 : i + 1;
+          if (j < 0 || j >= pa.divisionAbbs.length) return pa;
+          const next = [...pa.divisionAbbs];
+          [next[i], next[j]] = [next[j], next[i]];
+          return { ...pa, divisionAbbs: next };
+        }),
+      })),
+    []
+  );
+
   const assignDivision = useCallback(
     (accountId: string, divAbb: string) =>
       setState((s) => ({
@@ -667,6 +690,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         toggleAllPostingAccounts,
         toggleDivisionAbb,
         movePostingAccount,
+        moveDivisionAbbOnAccount,
         assignDivision,
         unassignDivision,
         toggleDivisionOnAccount,
