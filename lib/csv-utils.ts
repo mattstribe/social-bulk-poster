@@ -244,8 +244,9 @@ function promoUrlForPostType(
  *
  * Includes posting accounts that have FB or IG linked. For each enabled
  * post type with a filename pattern, only divisions that have matching
- * files on the CDN (per manifest) are included—no manual account/division
- * checkboxes. Rows are skipped when the manifest has no matches for that
+ * files on the CDN (per manifest) are included. Account-level and
+ * division-level checkboxes are honored from the UI before row creation.
+ * Rows are skipped when the manifest has no matches for that
  * account/post type combo.
  *
  * Carousel limit: at most {@link MAX_CAROUSEL_IMAGES} images per post. With a
@@ -301,7 +302,11 @@ export function generateCsvRows(
           : postType.defaultTime
       );
 
-      const divs = account.divisionAbbs
+      const enabledDivisionAbbs = account.divisionAbbs.filter(
+        (abb) => !account.disabledDivisionAbbs.includes(abb)
+      );
+
+      const divs = enabledDivisionAbbs
         .map((abb) => divMap.get(abb))
         .filter((d): d is Division => !!d);
 

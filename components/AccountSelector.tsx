@@ -37,7 +37,7 @@ function buildPreview(
 }
 
 export default function AccountSelector() {
-  const { state, cdnManifest, updatePostingAccount } = useStore();
+  const { state, cdnManifest, updatePostingAccount, toggleDivisionAbb } = useStore();
 
   const enabledPatterned = useMemo(
     () =>
@@ -156,6 +156,7 @@ export default function AccountSelector() {
                 onToggleChecked={(id, checked) =>
                   updatePostingAccount(id, { checked })
                 }
+                onToggleDivision={(id, abb) => toggleDivisionAbb(id, abb)}
               />
             )}
             {tierPreview.length > 0 && (
@@ -167,6 +168,7 @@ export default function AccountSelector() {
                 onToggleChecked={(id, checked) =>
                   updatePostingAccount(id, { checked })
                 }
+                onToggleDivision={(id, abb) => toggleDivisionAbb(id, abb)}
               />
             )}
           </div>
@@ -182,12 +184,14 @@ function PreviewGroup({
   color,
   entries,
   onToggleChecked,
+  onToggleDivision,
 }: {
   label: string;
   count: number;
   color: "blue" | "purple";
   entries: { account: PostingAccount; divisions: DivisionPreview[] }[];
   onToggleChecked: (id: string, checked: boolean) => void;
+  onToggleDivision: (id: string, abb: string) => void;
 }) {
   const colorClass =
     color === "blue" ? "text-blue-600" : "text-purple-600";
@@ -221,15 +225,27 @@ function PreviewGroup({
               {divisions.map(({ abb, breakdown }) => (
                 <li
                   key={abb}
-                  className="font-mono text-xs text-zinc-600 dark:text-zinc-400"
+                  className="flex items-start gap-2 font-mono text-xs text-zinc-600 dark:text-zinc-400"
                 >
-                  {abb}{" "}
-                  <span className="text-zinc-400 dark:text-zinc-500">
-                    {breakdown.map((b) => (
-                      <span key={b.postTypeId} className="whitespace-nowrap">
-                        ({b.count} {b.label}){" "}
-                      </span>
-                    ))}
+                  <input
+                    type="checkbox"
+                    checked={
+                      !account.disabledDivisionAbbs?.includes(abb) &&
+                      !!account.checked
+                    }
+                    onChange={() => onToggleDivision(account.id, abb)}
+                    className="mt-0.5 accent-green-600"
+                    title={`Include ${abb} for this account`}
+                  />
+                  <span>
+                    {abb}{" "}
+                    <span className="text-zinc-400 dark:text-zinc-500">
+                      {breakdown.map((b) => (
+                        <span key={b.postTypeId} className="whitespace-nowrap">
+                          ({b.count} {b.label}){" "}
+                        </span>
+                      ))}
+                    </span>
                   </span>
                 </li>
               ))}
