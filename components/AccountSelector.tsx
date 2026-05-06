@@ -234,7 +234,7 @@ function PreviewGroup({
                       !!account.checked
                     }
                     onChange={() => onToggleDivision(account.id, abb)}
-                    className="mt-0.5 accent-green-600"
+                    className="mt-0.5 accent-zinc-400"
                     title={`Include ${abb} for this account`}
                   />
                   <span>
