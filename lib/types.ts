@@ -219,7 +219,7 @@ export const DEFAULT_POST_TYPES: PostType[] = [
     tierDefaultDateLocked: false,
     tierWeekday: 5,
     cdnFolder: "Stats",
-    /** Exactly `{divAbb}_Stats.png` — no numbered suffixes (_1, _2). */
+    /** Prefix match: `{divAbb}_Stats`, `{divAbb}_Stats_Playoffs`, etc. */
     filenamePattern: "{divAbb}_Stats",
     promoAssetId: "",
     enabled: true,

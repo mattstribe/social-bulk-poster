@@ -75,8 +75,8 @@ export function parseDivisionsCsv(csvText: string): Division[] {
 
 /**
  * Build image URLs for a division + post type combo.
- * Uses manifest file lists; Stats matches `{divAbb}_Stats.png` only (no _1/_2).
- * Other types use prefix matching (e.g. Standings → _1.png, _2.png).
+ * Uses manifest file lists with prefix matching (e.g. Standings → _1/_2,
+ * Stats → `{divAbb}_Stats`, `{divAbb}_Stats_Playoffs`).
  * Falls back to a best-guess URL when no manifest is available.
  */
 /**

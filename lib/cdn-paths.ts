@@ -94,17 +94,13 @@ export function fileMatchesFilenamePrefix(
 }
 
 /**
- * Built-in Stats uses a single file per division: `{divAbb}_Stats.png` (no _1, _2).
- * Other types use prefix matching so numbered exports still work.
+ * Prefix match so numbered and variant exports work (e.g. `_Standings_1`,
+ * `{divAbb}_Stats`, `{divAbb}_Stats_Playoffs`).
  */
 export function fileMatchesPostTypePattern(
   filename: string,
-  postTypeId: string,
+  _postTypeId: string,
   resolvedPrefix: string
 ): boolean {
-  if (postTypeId === "stats") {
-    const base = filename.replace(/\.(png|jpe?g|webp)$/i, "");
-    return base.toLowerCase() === resolvedPrefix.toLowerCase();
-  }
   return fileMatchesFilenamePrefix(filename, resolvedPrefix);
 }
